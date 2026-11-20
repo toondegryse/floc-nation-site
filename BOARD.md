@@ -8,25 +8,24 @@ Only the PM edits this file, except for the "Needs you" boxes, which are Toon's.
 
 ## Doing
 
-None yet. The first PM run picks up work.
+None.
 
 ## In review
 
-None.
+- **T1 · Site skeleton and brand styles** · builder · Fri 20 Nov
+  - Files: `docs/index.html`, `docs/css/site.css`
+  - Built: header logo lockup, footer with tagline and social links, shared brand styles (incl. form and card styles for the calculator), CSP and `noindex`. Manrope uses the Google Fonts fallback for now (font downloads are blocked here); must be self-hosted before G3.
+- **T2 · Priming maths and tests** · builder · Fri 20 Nov
+  - Files: `docs/js/priming.js`, `tests/priming.test.js`
+  - Built: pure functions, presets and input checks; 62 tests pass, including the three reference cases.
+- **T3 · Home page copy draft** · builder · Fri 20 Nov
+  - Files: `COPY.md`
+  - Built: hero (two options), what Floc Nation is, the three ventures, calculator pointer, community line, links, and six questions for Toon.
 
 ## To do
 
-- **T1 · Site skeleton and brand styles** · builder · needs: none
-  - Files: `docs/index.html`, `docs/css/site.css`, `docs/fonts/`
-  - Done when: header with the logo lockup, footer with the tagline and social links, brand colours in place, Manrope self-hosted with its licence (or the Google Fonts fallback in `CLAUDE.md`, flagged in the report), `noindex` meta present, works at 360 px.
-- **T2 · Priming maths and tests** · builder · needs: none
-  - Files: `docs/js/priming.js`, `tests/priming.test.js`
-  - Done when: pure functions for residual CO2, batch grams and grams per bottle (dextrose and table sugar), the three reference cases in `PROJECT.md` pass, and invalid input throws a clear error.
-- **T3 · Home page copy draft** · builder · needs: none
-  - Files: `COPY.md`
-  - Done when: a hero line, what Floc Nation is (two or three sentences), the three ventures (one or two lines each), a community line, and social links, all in the brand voice. The PM then raises gate G1.
 - **T4 · Calculator page** · builder · needs: T1, T2
-  - Files: `docs/calculator.html`, `docs/js/calculator.js`
+  - Files: `docs/calculator.html`, `docs/js/calculator.js`, `docs/index.html` (link to the calculator only)
   - Done when: the inputs and outputs from `PROJECT.md` work, style presets fill the target, the safety notes and inline errors show, and the home page links to it.
 - **T5 · Build the home page from the approved copy** · builder · needs: T1, G1
   - Files: `docs/index.html`

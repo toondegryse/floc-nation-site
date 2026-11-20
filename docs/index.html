@@ -4,25 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'">
-<title>Floc Nation</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&display=swap" rel="stylesheet">
-<style>
-body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:#F3EEE5;color:#13233A;font-family:Manrope,system-ui,sans-serif;text-align:center;padding:24px;box-sizing:border-box}
-.mark{display:flex;align-items:baseline;gap:4px;font-weight:800;font-size:clamp(64px,22vw,140px);line-height:1;letter-spacing:.01em}
-.mark img{width:.8em;height:.8em;margin-bottom:-.037em}
-.nation{display:flex;align-items:center;gap:14px;font-weight:600;font-size:clamp(14px,4vw,24px);letter-spacing:.6em;padding-left:.6em}
-.nation span{width:48px;height:2px;background:#2F5D8A}
-p{margin:0;font-weight:500;color:#4F5B6B}
-</style>
+<!-- Google Fonts entries in style-src and font-src are for the preview only. Remove them once Manrope is self-hosted (before gate G3). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>Floc Nation · Brewed and built in Bangkok</title>
+<meta name="description" content="Floc Nation is home brewing in Bangkok: the brewing, the automations built for it, and the community around it.">
+<meta name="theme-color" content="#F3EEE5">
+<link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-<div>
-<div class="mark">FL<img src="assets/cap.svg" alt="O">C</div>
-<div class="nation"><span></span>NATION<span></span></div>
-</div>
-<p>Brewed and built in Bangkok. Coming soon.</p>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="logo" href="./" aria-label="Floc Nation, home">
+      <span class="logo__mark" aria-hidden="true">FL<img src="assets/cap.svg" alt="" width="29" height="29">C</span>
+      <span class="logo__nation" aria-hidden="true"><span>NATION</span></span>
+    </a>
+  </div>
+</header>
+
+<main id="main" class="site-main">
+  <div class="container">
+    <h1>Brewed and built in Bangkok.</h1>
+    <p class="lead">Site coming soon.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p class="site-footer__tagline">Brewed and built in Bangkok</p>
+    <p class="site-footer__label" id="social-label">Find us as flocnationbrew on</p>
+    <nav aria-labelledby="social-label">
+      <ul class="social-links">
+        <li><a href="https://www.instagram.com/flocnationbrew/">Instagram</a></li>
+        <li><a href="https://www.youtube.com/@flocnationbrew">YouTube</a></li>
+        <li><a href="https://www.tiktok.com/@flocnationbrew">TikTok</a></li>
+        <li><a href="https://www.facebook.com/flocnationbrew">Facebook</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>
 </body>
 </html>
