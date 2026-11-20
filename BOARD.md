@@ -13,13 +13,11 @@ None.
 
 ## In review
 
-- **T6a · Reject hex, binary and octal text in number fields** · builder · Fri 20 Nov (second try)
-  - Files: `docs/js/priming.js`
-  - Fixed: the decimal check now runs in linear time (1,000,000 characters in under 20 ms); same text accepted as before. 319 tests, 0 fail.
+None.
 
 ## To do
 
-- **T6 · Calculator test pass** · tester · needs: T6a · failed review once (Fri 20 Nov)
+- **T6 · Calculator test pass** · tester · ready (T6a done) · failed review once (Fri 20 Nov)
   - Done when: the module tests pass, edge cases are covered, and the numbers on the page match the module for the reference cases.
   - Findings: everything passes except hex/binary/octal input (4 tests in `tests/calculator.test.js`, 120 tests added). Rerun after T6a.
 - **T5 · Build the home page from the approved copy** · builder · needs: T1, G1
@@ -37,6 +35,7 @@ None.
 
 ## Done
 
+- **T6a · Reject hex, binary and octal text in number fields** · builder · Fri 20 Nov · second try: tester pass (12 tests added, 331 tests, 0 fail; 1,000,000-character hostile text rejected in about 10 ms), security pass
 - **T4 · Calculator page** · builder · Fri 20 Nov · tester pass (browser check of all cases, 360 and 320 px, keyboard), security pass
 - **T1 · Site skeleton and brand styles** · builder · Fri 20 Nov · tester pass, security pass (Manrope still on the Google Fonts fallback; self-host before G3)
 - **T2 · Priming maths and tests** · builder · Fri 20 Nov · tester pass (87 maths tests), security pass

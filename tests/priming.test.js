@@ -663,6 +663,95 @@ describe('plain decimal text only (T6a review)', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Added by the tester in the T6a second review.
+// ---------------------------------------------------------------------------
+
+describe('plain decimal text only (T6a second review)', () => {
+  const FIELDS = [
+    { field: 'litres', notANumber: 'Beer volume must be a number.', notPositive: 'Beer volume must be more than 0 litres.' },
+    { field: 'tempC', notANumber: 'Temperature must be a number.' },
+    { field: 'targetVols', notANumber: 'Target CO2 must be a number.', notPositive: 'Target CO2 must be more than 0 volumes.' },
+    { field: 'bottleMl', notANumber: 'Bottle size must be a number.', notPositive: 'Bottle size must be more than 0 ml.' },
+  ];
+
+  test('rejects signed hex, binary and octal text ("-0x14", "+0B10100", " -0o24 ") as not a number in every field', () => {
+    const texts = ['-0x14', '+0x14', '-0X14', '+0b10100', '-0B10100', '+0o24', '-0O24', ' -0x14 ', '\t+0b10100\n', '  -0o24  '];
+    for (const { field, notANumber } of FIELDS) {
+      for (const text of texts) {
+        assertInputError(() => calc({ [field]: text }), field, notANumber);
+      }
+    }
+  });
+
+  test('still accepts a point and an exponent together ("2.e1", ".2e2", "2.0E+1") in every field', () => {
+    for (const { field } of FIELDS) {
+      for (const text of ['2.e1', '.2e2', '2.0E+1', '20.0e0', '+2.e+1']) {
+        assert.deepEqual(calc({ [field]: text }), calc({ [field]: 20 }), `${field}: "${text}"`);
+      }
+    }
+  });
+
+  test('"-0" text is accepted as 0 °C', () => {
+    assert.deepEqual(calc({ tempC: '-0' }), calc({ tempC: 0 }));
+  });
+
+  test('"-0" text gets the "more than 0" message for volume, target CO2 and bottle size', () => {
+    for (const { field, notPositive } of FIELDS.filter((f) => f.notPositive)) {
+      assertInputError(() => calc({ [field]: '-0' }), field, notPositive);
+    }
+  });
+
+  // Each shape is checked at 20,000 characters first. A quadratic check takes
+  // about 1 s there, so a slow regex fails fast instead of hanging the run at
+  // 1,000,000 characters. A linear check takes about 10 ms at full size.
+  function assertRejectedQuickly(makeText) {
+    for (const [size, limitMs] of [[20_000, 50], [1_000_000, 100]]) {
+      const text = makeText(size);
+      const start = performance.now();
+      assertInputError(() => calc({ litres: text }), 'litres', 'Beer volume must be a number.');
+      const ms = performance.now() - start;
+      assert.ok(ms < limitMs, `took ${ms.toFixed(0)} ms to reject ${text.length} characters (limit ${limitMs} ms)`);
+    }
+  }
+
+  describe('rejects long hostile text in under 100 ms at 1,000,000 characters', () => {
+    const half = (n) => Math.floor(n / 2);
+
+    test('digits then one bad character ("111…1x")', () => {
+      assertRejectedQuickly((n) => `${'1'.repeat(n)}x`);
+    });
+
+    test('digits, a point, digits, then one bad character ("111.111…x")', () => {
+      assertRejectedQuickly((n) => `${'1'.repeat(half(n))}.${'1'.repeat(half(n))}x`);
+    });
+
+    test('a long exponent then one bad character ("1e111…x")', () => {
+      assertRejectedQuickly((n) => `1e${'1'.repeat(n)}x`);
+    });
+
+    test('digits, an exponent, digits, then one bad character ("111e111…x")', () => {
+      assertRejectedQuickly((n) => `${'1'.repeat(half(n))}e${'1'.repeat(half(n))}x`);
+    });
+
+    test('digits then an exponent with no digits ("111…e+")', () => {
+      assertRejectedQuickly((n) => `${'1'.repeat(n)}e+`);
+    });
+
+    test('a long run of dots ("……")', () => {
+      assertRejectedQuickly((n) => '.'.repeat(n));
+    });
+
+    test('a long run of signs then a digit ("+-+-…1")', () => {
+      assertRejectedQuickly((n) => `${'+-'.repeat(half(n))}1`);
+    });
+
+    test('"1." over and over ("1.1.1.…")', () => {
+      assertRejectedQuickly((n) => '1.'.repeat(half(n)));
+    });
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')
