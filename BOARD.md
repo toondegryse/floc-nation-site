@@ -9,13 +9,13 @@ Only the PM edits this file, except for the "Needs you" boxes, which are Toon's.
 
 ## Doing
 
-- **T4 · Calculator page** · builder · started Fri 20 Nov
-  - Files: `docs/calculator.html`, `docs/js/calculator.js`, `docs/index.html` (link to the calculator only)
-  - Done when: the inputs and outputs from `PROJECT.md` work, style presets fill the target, the safety notes and inline errors show, and the home page links to it.
+None.
 
 ## In review
 
-None.
+- **T4 · Calculator page** · builder · Fri 20 Nov
+  - Files: `docs/calculator.html`, `docs/js/calculator.js`, `docs/index.html` (header nav link only)
+  - Built: live calculator with presets, bottle sizes, sugar type, both safety notes and per-field inline errors; reference cases show 123.1 / 2.03, 73.7 / 2.43, 257.9 / 3.70 g. Home page header now links to it.
 
 ## To do
 
