@@ -210,7 +210,9 @@ function readNumber(value, field) {
 
 // Plain decimal text: optional sign, digits with an optional point, optional
 // exponent. Number() alone would also read "0x14", "0b10100" and "0o24" as 20.
-const DECIMAL_TEXT = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+// Digits after the point only count when the point is there, so a long run of
+// digits has one way to match and a failed check stays linear in its length.
+const DECIMAL_TEXT = /^[+-]?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i;
 
 /** A number as is, plain decimal text as its value, anything else as NaN. */
 function toNumber(value) {
