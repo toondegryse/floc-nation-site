@@ -1,5 +1,12 @@
 # Status
 
+## Fri 20 Nov 2026 · Day 0 · PM run (started by Toon)
+- **Done:** T6a: number fields no longer read "0x14" as 20, and long pasted text can't freeze the page. Tester and security both pass. The ticket board moved to Trello: https://trello.com/b/bFug8tRw/floc-nation-website (`BOARD.md` now points there).
+- **Doing:** T6 calculator test rerun, being handled by the parallel PM run that started at 14:28.
+- **Needs you:** G0 (preview link) and G1 (read `COPY.md`), now as cards in "Needs you" on the Trello board. The morning task's instructions still say "this repo only", and Trello isn't among its connectors. Update both so the morning runs can use the board.
+- **Try it:** nothing new (the calculator link works once G0 is on).
+- **Risks:** two PM runs were working at the same time today; their board and test changes were merged by hand. Manrope still has to be self-hosted before G3.
+
 ## Fri 20 Nov 2026 · Day 0 · PM run
 
 - **Done:** T1 site skeleton and brand styles, T2 priming maths (87 tests), T3 home page copy draft, T4 calculator page. Each passed the tester, and T1, T2 and T4 passed security. G1 raised.
