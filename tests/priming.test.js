@@ -1,5 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   BOTTLE_SIZES_ML,
@@ -376,5 +377,135 @@ describe('invalid input', () => {
   test('calculatePriming without an inputs object throws a TypeError', () => {
     assert.throws(() => calculatePriming(), TypeError);
     assert.throws(() => calculatePriming(null), TypeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Added by the tester in the T2 review.
+// ---------------------------------------------------------------------------
+
+// Table sugar on the PROJECT.md reference cases. Expected values were worked
+// out by hand from the PROJECT.md formulas with factor 3.82, not from priming.js.
+const TABLE_SUGAR_CASES = [
+  { litres: 20, tempC: 20, targetVols: 2.4, batchGrams: 117.5, per330: 1.94 },
+  { litres: 10, tempC: 25, targetVols: 2.6, batchGrams: 70.4, per330: 2.32 },
+  { litres: 23, tempC: 30, targetVols: 3.5, batchGrams: 246.3, per330: 3.53 },
+];
+
+describe('table sugar on the reference cases', () => {
+  for (const c of TABLE_SUGAR_CASES) {
+    const label = `${c.litres} L, ${c.tempC} °C, ${c.targetVols} vols`;
+    const inputs = { litres: c.litres, tempC: c.tempC, targetVols: c.targetVols, sugar: 'table' };
+
+    test(`batch needs ${c.batchGrams} g table sugar for ${label}`, () => {
+      assertNear(calculatePriming(inputs).batchGrams, c.batchGrams, BATCH_TOLERANCE);
+    });
+
+    test(`a 330 ml bottle needs ${c.per330} g table sugar for ${label}`, () => {
+      assertNear(calculatePriming(inputs).perBottleGrams, c.per330, PER_BOTTLE_TOLERANCE);
+    });
+  }
+});
+
+describe('boundaries', () => {
+  const TEMP_RANGE = 'Temperature must be between 0 and 40 °C.';
+
+  test('calculatePriming gives a result at exactly 0 °C and 40 °C', () => {
+    assert.equal(calc({ tempC: 0 }).noSugarNeeded, false);
+    assert.equal(calc({ tempC: 40 }).noSugarNeeded, false);
+  });
+
+  test('rejects a temperature just below 0 °C', () => {
+    assertInputError(() => calc({ tempC: -0.1 }), 'tempC', TEMP_RANGE);
+  });
+
+  test('rejects a temperature just above 40 °C', () => {
+    assertInputError(() => calc({ tempC: 40.1 }), 'tempC', TEMP_RANGE);
+  });
+
+  test('rejects an out-of-range temperature typed into a form field', () => {
+    assertInputError(() => calc({ tempC: '41' }), 'tempC', TEMP_RANGE);
+  });
+
+  test('rejects 0 litres typed into a form field', () => {
+    assertInputError(() => calc({ litres: '0' }), 'litres', 'Beer volume must be more than 0 litres.');
+  });
+
+  test('rejects negative litres typed into a form field', () => {
+    assertInputError(() => calc({ litres: '-5' }), 'litres', 'Beer volume must be more than 0 litres.');
+  });
+
+  test('a target just above the residual CO2 needs sugar and shows no "no sugar" note', () => {
+    const result = calc({ targetVols: residualCO2(20) + 0.01 });
+    assert.equal(result.noSugarNeeded, false);
+    assert.ok(result.batchGrams > 0, `expected more than 0 g, got ${result.batchGrams}`);
+  });
+
+  test('table sugar also gives 0 g when the target is below the residual CO2', () => {
+    const result = calc({ targetVols: 0.5, sugar: 'table' });
+    assert.equal(result.noSugarNeeded, true);
+    assert.equal(result.batchGrams, 0);
+    assert.equal(result.perBottleGrams, 0);
+  });
+});
+
+describe('bottle sizes', () => {
+  for (const ml of BOTTLE_SIZES_ML) {
+    test(`a ${ml} ml bottle gets batch grams × bottle litres ÷ batch litres`, () => {
+      const result = calc({ bottleMl: ml });
+      // Worked from PROJECT.md: 123.081024 g × (ml / 1000) ÷ 20 L.
+      assertNear(result.perBottleGrams, (123.081024 * (ml / 1000)) / 20, 1e-6);
+    });
+  }
+
+  test('a custom bottle size is accepted', () => {
+    // 750 ml custom bottle: 123.081024 × 0.75 ÷ 20 = 4.6155384 g.
+    assertNear(calc({ bottleMl: 750 }).perBottleGrams, 4.6155384, 1e-6);
+  });
+});
+
+describe('style presets and the high-pressure note', () => {
+  test('the wheat beer default target triggers the high-pressure note', () => {
+    const wheat = STYLE_PRESETS.find((p) => p.name === 'Wheat beer');
+    assert.equal(calc({ targetVols: wheat.default }).highPressure, true);
+  });
+
+  test('no other style default triggers the high-pressure note', () => {
+    const others = STYLE_PRESETS.filter((p) => p.default !== null && p.name !== 'Wheat beer');
+    for (const p of others) {
+      assert.equal(calc({ targetVols: p.default }).highPressure, false, `${p.name} was flagged`);
+    }
+  });
+
+  test('every style default gives a result for the first reference batch', () => {
+    for (const p of STYLE_PRESETS.filter((s) => s.default !== null)) {
+      const result = calc({ targetVols: p.default });
+      assert.ok(result.batchGrams > 0, `${p.name} gave ${result.batchGrams} g`);
+    }
+  });
+});
+
+describe('module purity', () => {
+  // Source with comments removed, so the doc comments don't trigger matches.
+  const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+
+  test('priming.js imports nothing', () => {
+    assert.doesNotMatch(source, /\bimport\b|\brequire\s*\(/);
+  });
+
+  test('priming.js uses no DOM, browser storage or Node globals', () => {
+    assert.doesNotMatch(
+      source,
+      /\b(window|document|navigator|localStorage|sessionStorage|process|Buffer|globalThis|fetch|console)\b/,
+    );
+  });
+
+  test('calculatePriming does not change the inputs object', () => {
+    const inputs = { litres: '20', tempC: '20', targetVols: '2.4', bottleMl: '330', sugar: 'table' };
+    const copy = { ...inputs };
+    calculatePriming(inputs);
+    assert.deepEqual(inputs, copy);
   });
 });

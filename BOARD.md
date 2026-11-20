@@ -5,28 +5,20 @@ Only the PM edits this file, except for the "Needs you" boxes, which are Toon's.
 ## Needs you
 
 - [ ] **G0 · Turn on the preview link (one time).** On GitHub, go to this repo, then Settings, then Pages. Under "Build and deployment", choose "Deploy from a branch", branch `main`, folder `/docs`, and save. The link will be https://toondegryse.github.io/floc-nation-site/
+- [ ] **G1 · Sign off the home page copy.** Read `COPY.md`. Tick to approve, or write `no:` on this line with what to change. Five short questions sit at the end of `COPY.md`, including whether https://www.facebook.com/flocnationbrew is the right Facebook page. You can approve now and answer them later.
 
 ## Doing
 
-None.
+- **T4 · Calculator page** · builder · started Fri 20 Nov
+  - Files: `docs/calculator.html`, `docs/js/calculator.js`, `docs/index.html` (link to the calculator only)
+  - Done when: the inputs and outputs from `PROJECT.md` work, style presets fill the target, the safety notes and inline errors show, and the home page links to it.
 
 ## In review
 
-- **T1 · Site skeleton and brand styles** · builder · Fri 20 Nov
-  - Files: `docs/index.html`, `docs/css/site.css`
-  - Built: header logo lockup, footer with tagline and social links, shared brand styles (incl. form and card styles for the calculator), CSP and `noindex`. Manrope uses the Google Fonts fallback for now (font downloads are blocked here); must be self-hosted before G3.
-- **T2 · Priming maths and tests** · builder · Fri 20 Nov
-  - Files: `docs/js/priming.js`, `tests/priming.test.js`
-  - Built: pure functions, presets and input checks; 62 tests pass, including the three reference cases.
-- **T3 · Home page copy draft** · builder · Fri 20 Nov
-  - Files: `COPY.md`
-  - Built: hero (two options), what Floc Nation is, the three ventures, calculator pointer, community line, links, and six questions for Toon.
+None.
 
 ## To do
 
-- **T4 · Calculator page** · builder · needs: T1, T2
-  - Files: `docs/calculator.html`, `docs/js/calculator.js`, `docs/index.html` (link to the calculator only)
-  - Done when: the inputs and outputs from `PROJECT.md` work, style presets fill the target, the safety notes and inline errors show, and the home page links to it.
 - **T5 · Build the home page from the approved copy** · builder · needs: T1, G1
   - Files: `docs/index.html`
 - **T6 · Calculator test pass** · tester · needs: T4
@@ -42,4 +34,7 @@ None.
 
 ## Done
 
+- **T1 · Site skeleton and brand styles** · builder · Fri 20 Nov · tester pass, security pass (Manrope still on the Google Fonts fallback; self-host before G3)
+- **T2 · Priming maths and tests** · builder · Fri 20 Nov · tester pass (87 maths tests), security pass
+- **T3 · Home page copy draft** · builder · Fri 20 Nov · tester pass · G1 raised
 - **T0 · Project set up** (brief, board, crew, morning run) · Fri 20 Nov
