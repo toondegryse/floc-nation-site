@@ -37,6 +37,12 @@ The PM never approves a gate itself. Gates are cards in the "Needs you" list on 
 - **No secrets** anywhere in the repo.
 - The full checklist is in `.claude/agents/security.md`. Security must pass before T10 and before G3.
 
+## Added by Toon (Fri 20 Nov 2026)
+
+- The site's logo and colours must match the "three hops" badge used on the social channels (see Brand in `CLAUDE.md`). The copper bottle-cap logo is retired.
+- The calculator shows a short guide for each beer style in the style menu: the usual CO2 range and practical advice.
+- A social profile kit in the same identity for Instagram, YouTube, Facebook and TikTok: profile picture, banners where a channel has one, and matching bios. Toon uploads it to the channels himself.
+
 ## Out of scope for v1
 
 - Shop, payments, sign-up forms, newsletters or any form that collects data.

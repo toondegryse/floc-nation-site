@@ -12,21 +12,26 @@ A small static website for Floc Nation, Toon's home-brewing brand in Bangkok. Re
 
 ## Brand
 
+The site must match the identity already used on the social channels: the "three hops" badge that is the profile picture on Instagram, TikTok and Facebook (chosen by Toon on the "Floc Nation logo" canvas, Direction 3). The earlier copper bottle-cap logo is retired.
+
 - Name: **Floc Nation**, always spelled without a K (a play on flocculation).
 - Social handle everywhere: `flocnationbrew` (Instagram, YouTube, Facebook, TikTok).
-- Colours:
-  - Navy `#13233A`: text and dark backgrounds
-  - Steel blue `#2F5D8A`: sub-brand names, links, rules
-  - Copper `#B8741F`: the bottle cap in the logo only
-  - Paper `#F3EEE5`: page background
-  - Paper border `#D9D1C3`
-  - Muted text `#4F5B6B`
-- Type: Manrope. ExtraBold (800) for the wordmark and headlines; 500 and 600 for everything else.
-- Logo: "FL", then the copper bottle cap as the O (`docs/assets/cap.svg`), then "C". Under it, "NATION" in widely spaced capitals between two thin steel-blue lines.
+- Logo: the three-hops badge, `docs/assets/floc-nation-badge.svg` (source copy in `brand/logo/`). Three teal hop cones above a navy banner, "FLOC" in white, "NATION" in sky. Use the file as it is: never redraw, recolour, stretch, crop or add to it. Give it clear space of at least a quarter of its height on every side.
+- Colours (taken from the badge):
+  - Navy `#022C54`: text, header and footer backgrounds, dark panels
+  - Hop teal `#06929E`: accents, rules, icons, and text 24 px or larger on white
+  - Deep teal `#06727B`: links and small accent text on white
+  - Sky `#2BACC7`: accents and links on navy only (too light for text on white)
+  - White `#FDFDFD`: page background, text on navy
+  - Pale blue `#EEF4F8`: cards and panels on the white page
+  - Line `#D5DEE6`: borders and dividers (decoration only)
+  - Muted text `#4F5B6B`: secondary text on white or pale blue
+- Type: Manrope. ExtraBold (800) for headlines; 500 and 600 for everything else. The badge lettering is artwork, not a font.
 - Tagline: "Brewed and built in Bangkok".
-- Look: professional and calm. Not playful, not kid-like.
+- Look: professional and calm, like the badge. Not playful, not kid-like.
 - Voice: practical and plain. Talk about real brewing problems and how they get fixed. Short sentences. No hype words.
 - Copy stays on the hobby, the automations and the community. No beer sales, prices or legal topics.
+- Social profiles use the same badge, colours, tagline and bio on every channel. The kit lives in `brand/social/`.
 
 ## Tech rules
 
