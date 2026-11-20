@@ -15,6 +15,7 @@ import {
   DEFAULT_VALUES,
   NOTES,
   computeView,
+  styleGuideView,
   targetForStyle,
 } from '../docs/js/calculator.js';
 import { BOTTLE_SIZES_ML, STYLE_PRESETS, calculatePriming, residualCO2 } from '../docs/js/priming.js';
@@ -968,5 +969,73 @@ describe('page wiring: more edge cases (stand-in DOM, T6 second run)', () => {
       assert.ok(page.shown(errorId));
       assert.equal(page.text(errorId), message);
     }
+  });
+});
+
+// Added by the tester for T12 (beer style guide).
+describe('style guide on the page (stand-in DOM, T12)', () => {
+  const GUIDE_SLOTS = [1, 2, 3, 4];
+
+  /** The guide lines painted into the panel, as { label, text }, visible slots only. */
+  const paintedGuide = (page) =>
+    GUIDE_SLOTS.filter((n) => page.shown(`style-guide-${n}`)).map((n) => ({
+      label: page.text(`style-guide-${n}-label`),
+      text: page.text(`style-guide-${n}-text`),
+    }));
+
+  test('the style menu options are plain style names with no figures', async () => {
+    const page = await openPage();
+    const names = page.el('style').children.map((o) => o.textContent);
+    assert.deepEqual(names, STYLE_PRESETS.map((p) => p.name));
+    for (const name of names) assert.doesNotMatch(name, /\d|volume|–|\(/, name);
+  });
+
+  test('the page opens with the default style guide shown under the style menu', async () => {
+    const page = await openPage();
+    assert.ok(page.shown('style-guide'), 'panel shown');
+    assert.deepEqual(paintedGuide(page), styleGuideView(DEFAULT_STYLE_ID).points);
+  });
+
+  test('picking each style paints its guide lines into the panel, in order', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    for (const p of STYLE_PRESETS) {
+      page.pick('style', p.id);
+      assert.ok(page.shown('style-guide'), `${p.id}: panel shown`);
+      assert.deepEqual(paintedGuide(page), styleGuideView(p.id).points, p.id);
+    }
+  });
+
+  test('picking a style updates the guide and the target together', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    page.pick('style', 'wheat');
+    assert.equal(page.el('target-vols').value, '3.5');
+    assert.equal(page.text('style-guide-1-text'), styleGuideView('wheat').points[0].text);
+    page.pick('style', 'british-ales');
+    assert.equal(page.el('target-vols').value, '1.8');
+    assert.equal(page.text('style-guide-1-text'), styleGuideView('british-ales').points[0].text);
+  });
+
+  test('typing in other fields leaves the guide for the picked style in place', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    page.pick('style', 'stout-porter');
+    page.type('litres', '0');
+    page.type('temp-c', '45');
+    page.type('target-vols', '9');
+    assert.deepEqual(paintedGuide(page), styleGuideView('stout-porter').points);
+  });
+
+  test('a style value with no guide hides the guide panel', async () => {
+    const page = await openPage();
+    page.el('style').value = 'not-a-style'; // the stand-in select keeps only listed values, so this clears it
+    page.el('style').fire('change');
+    assert.ok(!page.shown('style-guide'), 'panel hidden');
+  });
+
+  test('the style menu keeps aria-describedby "style-hint style-guide" while other fields show errors', async () => {
+    const page = await openPage();
+    page.leave('litres');
+    page.type('temp-c', '45');
+    page.pick('style', 'custom');
+    assert.equal(page.el('style').getAttribute('aria-describedby'), 'style-hint style-guide');
   });
 });

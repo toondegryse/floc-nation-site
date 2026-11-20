@@ -1,5 +1,22 @@
 # Status
 
+## Fri 20 Nov 2026 · Day 0 · afternoon, with Toon
+- **Done:**
+  - G0: the preview link is live.
+  - T11: the site now uses the three-hops badge and its colours, the same as the social channels.
+  - T12: the calculator shows a short guide for each beer style.
+  - T13: a social profile kit for Instagram, YouTube, Facebook and TikTok is in `brand/social/`, with a brand sheet in `brand/BRAND.md`.
+  - All passed the tester and security. Tests: 440, 0 fail, 4 todo.
+- **Doing:** nothing, waiting on you.
+- **Needs you** (cards in "Needs you" on the Trello board):
+  - Upload the social kit (`brand/social/UPLOAD.md`).
+  - T6: tick to have the "no sugar needed" edge case fixed, or comment `no: leave it`.
+  - G1: read `COPY.md`.
+- **Try it:** https://toondegryse.github.io/floc-nation-site/calculator.html. Check the new look, then pick each beer style and read its guide.
+- **Risks:**
+  - The morning task still can't use Trello: its instructions and connectors need updating.
+  - Manrope must be self-hosted before G3.
+
 ## Fri 20 Nov 2026 · Day 0 · PM run (scheduled, started 14:28)
 
 - **Done:** T6a passed review (tester and security), in step with the run you started. The calculator test pass (T6) ran again: everything passes except one small case, its second fail, so it is parked for your call. Tests: 359, 0 fail, 4 todo.
