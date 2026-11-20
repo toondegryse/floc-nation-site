@@ -18,15 +18,26 @@ const read = (p) => readFileSync(p, 'utf8');
 const css = read(CSS_PATH);
 const cssNoComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-// Brand colours from CLAUDE.md.
+// Badge palette from CLAUDE.md (Brand). Token name in site.css -> hex.
 const BRAND = {
-  navy: '#13233A',
-  steel: '#2F5D8A',
-  copper: '#B8741F',
-  paper: '#F3EEE5',
-  'paper-border': '#D9D1C3',
+  navy: '#022C54',
+  teal: '#06929E',
+  'teal-deep': '#06727B',
+  sky: '#2BACC7',
+  white: '#FDFDFD',
+  pale: '#EEF4F8',
+  line: '#D5DEE6',
   muted: '#4F5B6B',
 };
+
+// The retired bottle-cap brand (navy, steel, copper, paper, paper border).
+// Muted #4F5B6B carried over into the badge palette, so it is not here.
+const RETIRED_HEXES = ['#13233A', '#2F5D8A', '#B8741F', '#F3EEE5', '#D9D1C3'];
+
+// The three-hops badge (CLAUDE.md): served copy and source copy.
+const BADGE_SRC = 'assets/floc-nation-badge.svg';
+const BADGE_PATH = join(DOCS, BADGE_SRC);
+const BADGE_SOURCE_PATH = join(ROOT, 'brand', 'logo', 'floc-nation-badge.svg');
 
 // The four flocnationbrew accounts (CLAUDE.md). Host -> platform name.
 const SOCIAL_HOSTS = {
@@ -90,6 +101,88 @@ const token = (name) => {
   return m[1];
 };
 
+// ---------- small CSS rule parser (enough for the hand-written site.css) ----------
+
+// Returns [{ media, selectors: [..], decls: { prop: value } }] for every style
+// rule, including rules inside @media blocks. Statements such as @import are skipped.
+const parseRules = (source, media = '') => {
+  const rules = [];
+  let i = 0;
+  while (i < source.length) {
+    const open = source.indexOf('{', i);
+    if (open === -1) break;
+    // Drop statements like @import ...; that come before this block.
+    let prelude = source.slice(i, open);
+    prelude = prelude.slice(prelude.lastIndexOf(';') + 1).trim();
+    let depth = 1;
+    let j = open + 1;
+    while (j < source.length && depth > 0) {
+      if (source[j] === '{') depth += 1;
+      else if (source[j] === '}') depth -= 1;
+      j += 1;
+    }
+    const body = source.slice(open + 1, j - 1);
+    if (/^@media\b/i.test(prelude)) {
+      rules.push(...parseRules(body, prelude));
+    } else if (!prelude.startsWith('@')) {
+      const decls = {};
+      for (const d of body.split(';')) {
+        const k = d.indexOf(':');
+        if (k > 0) decls[d.slice(0, k).trim().toLowerCase()] = d.slice(k + 1).trim();
+      }
+      rules.push({ media, selectors: prelude.split(',').map((s) => s.trim()).filter(Boolean), decls });
+    }
+    i = j;
+  }
+  return rules;
+};
+const cssRules = parseRules(cssNoComments);
+const screenRules = cssRules.filter((r) => !/\bprint\b/i.test(r.media));
+const usesToken = (value, name) => new RegExp(`var\\(\\s*--${name}\\s*\\)`).test(value ?? '');
+const ruleFor = (selector) => screenRules.find((r) => r.selectors.includes(selector));
+const resolveColour = (value) => {
+  const v = value?.match(/var\(\s*--([\w-]+)\s*\)/);
+  return v ? token(v[1]) : value?.match(/#[0-9a-fA-F]{6}\b/)?.[0];
+};
+
+// Areas with a navy background on screen, by class or element name, e.g.
+// .site-footer, .card--dark, .skip-link, .button, button.
+const navyAreas = screenRules
+  .filter((r) => usesToken(r.decls.background ?? r.decls['background-color'], 'navy'))
+  .flatMap((r) => r.selectors)
+  .filter((s) => /^(\.[\w-]+|[a-z]+)$/i.test(s));
+
+// True when a selector targets something inside (or is) one of the given areas.
+// BEM elements count as inside their block: .site-footer__label is in .site-footer.
+const insideArea = (selector, areas) =>
+  areas.some((area) => {
+    if (area.startsWith('.')) {
+      const name = area.slice(1).replace(/[-]/g, '\\-');
+      return new RegExp(`\\.${name}(?![\\w-])|\\.${name}__[\\w-]+`).test(selector);
+    }
+    return new RegExp(`(^|[\\s>+~(])${area}(?![\\w-])`, 'i').test(selector);
+  });
+
+// Selectors whose rule sets the text colour to the given token.
+const textSelectors = (name) =>
+  screenRules.filter((r) => usesToken(r.decls.color, name)).flatMap((r) => r.selectors.map((s) => ({ s, rule: r })));
+
+// Font size of a rule in px, if it sets one in px or rem.
+const fontSizePx = (rule) => {
+  const m = (rule.decls['font-size'] ?? '').match(/^([\d.]+)(px|rem)$/);
+  return m ? Number(m[1]) * (m[2] === 'rem' ? 16 : 1) : null;
+};
+
+const remOf = (value) => {
+  const m = (value ?? '').match(/^([\d.]+)rem$/);
+  return m ? Number(m[1]) : null;
+};
+
+// Every text file in docs/, recursively.
+const docsTextFiles = readdirSync(DOCS, { recursive: true })
+  .map(String)
+  .filter((f) => /\.(html|css|js|mjs|svg|json|txt|md|webmanifest|xml)$/i.test(f));
+
 // ==========================================================================
 // Per-page checks
 // ==========================================================================
@@ -142,6 +235,13 @@ for (const page of pages) {
       const sheet = tags(html).find((t) => /^<link\b/i.test(t) && attr(t, 'rel') === 'stylesheet');
       assert.ok(sheet, 'stylesheet link present');
       assert.equal(attr(sheet, 'href'), 'css/site.css');
+    });
+
+    test('theme-color is a badge palette colour', () => {
+      for (const m of metaByName(html, 'theme-color')) {
+        const c = (attr(m, 'content') ?? '').toUpperCase();
+        assert.ok(Object.values(BRAND).includes(c), `theme-color ${c} is not in the badge palette`);
+      }
     });
   });
 
@@ -242,10 +342,12 @@ for (const page of pages) {
     });
   });
 
-  describe(`${page}: header logo lockup`, () => {
+  describe(`${page}: header badge`, () => {
     const header = section(html, 'header');
     const logoTag = header && tags(header).find((t) => /^<a\b/i.test(t) && /\blogo\b/.test(attr(t, 'class') ?? ''));
     const logoInner = header?.match(/<a\b[^>]*class="[^"]*\blogo\b[^"]*"[^>]*>([\s\S]*?)<\/a>/i)?.[1] ?? '';
+    const logoImgs = tags(logoInner).filter((t) => /^<img\b/i.test(t));
+    const badgeImg = logoImgs[0];
 
     test('has a skip link to the main content as the first focusable element', () => {
       const firstLink = links(html)[0];
@@ -264,20 +366,29 @@ for (const page of pages) {
       assert.equal(attr(logoTag, 'aria-label'), 'Floc Nation, home');
     });
 
-    test('logo reads FL, the cap image as the O, C, then NATION', () => {
-      const shape = logoInner
-        .replace(/<img\b[^>]*src=["'][^"']*cap\.svg["'][^>]*>/gi, '(cap)')
-        .replace(/<[^>]*>/g, '')
-        .replace(/\s+/g, '');
-      assert.equal(shape, 'FL(cap)CNATION');
+    test('the home link holds exactly one image and nothing else', () => {
+      assert.equal(logoImgs.length, 1, `images in a.logo: ${logoImgs.length}`);
+      const rest = logoInner.replace(/<img\b[^>]*>/gi, '').trim();
+      assert.equal(rest, '', `a.logo also holds: ${rest}`);
     });
 
-    test('cap image in the logo is decorative (empty alt, aria-hidden wrapper)', () => {
-      const img = tags(logoInner).find((t) => /^<img\b/i.test(t));
-      assert.equal(attr(img, 'alt'), '');
-      for (const span of tags(logoInner).filter((t) => /^<span\b/i.test(t) && /logo__/.test(attr(t, 'class') ?? ''))) {
-        assert.equal(attr(span, 'aria-hidden'), 'true', `${span} should be aria-hidden`);
-      }
+    test(`the home link image is the badge, ${BADGE_SRC}`, () => {
+      assert.equal(attr(badgeImg, 'src'), BADGE_SRC);
+    });
+
+    test('the badge image has a non-empty alt', () => {
+      assert.ok((attr(badgeImg, 'alt') ?? '').trim().length > 0, `alt="${attr(badgeImg, 'alt')}"`);
+    });
+
+    test("the badge image's width and height keep the SVG viewBox ratio", () => {
+      const vb = read(BADGE_PATH).match(/<svg\b[^>]*\sviewBox=["']([^"']+)["']/i);
+      assert.ok(vb, 'badge SVG has a viewBox');
+      const [, , vw, vh] = vb[1].trim().split(/[\s,]+/).map(Number);
+      const w = Number(attr(badgeImg, 'width'));
+      const h = Number(attr(badgeImg, 'height'));
+      assert.ok(w > 0 && h > 0, `width=${attr(badgeImg, 'width')} height=${attr(badgeImg, 'height')}`);
+      const off = Math.abs(w / h - vw / vh) / (vw / vh);
+      assert.ok(off < 0.01, `img ${w}x${h} (${(w / h).toFixed(4)}) vs viewBox ${vw}x${vh} (${(vw / vh).toFixed(4)})`);
     });
 
     test('has exactly one h1', () => {
@@ -431,45 +542,189 @@ describe('calculator.html: page wiring', { skip: !pages.includes('calculator.htm
 // Shared stylesheet
 // ==========================================================================
 
-describe('site.css: brand colours', () => {
-  test('defines the six brand colours exactly as in CLAUDE.md', () => {
+describe('badge file', () => {
+  const svg = read(BADGE_PATH);
+
+  test('the badge SVG has no script elements', () => {
+    assert.doesNotMatch(svg, /<script\b/i);
+  });
+
+  test('the badge SVG has no foreignObject', () => {
+    assert.doesNotMatch(svg, /<foreignObject\b/i);
+  });
+
+  test('the badge SVG has no event-handler attributes', () => {
+    const offenders = tags(svg).filter((t) => /\son[a-z]+\s*=/i.test(t));
+    assert.deepEqual(offenders, []);
+  });
+
+  test('the badge SVG references nothing outside itself', () => {
+    for (const t of tags(svg)) {
+      for (const a of ['href', 'xlink:href', 'src']) {
+        const v = attr(t, a);
+        if (v !== null) assert.ok(v.startsWith('#'), `${a}="${v}" in ${t.slice(0, 60)}`);
+      }
+    }
+    for (const [, u] of svg.matchAll(/url\(\s*["']?([^"')]*)/gi)) assert.ok(u.startsWith('#'), `url(${u})`);
+    assert.doesNotMatch(svg, /@import/i, '@import');
+    assert.doesNotMatch(svg, /<image\b/i, '<image>');
+    const withoutNamespaces = svg.replace(/\sxmlns(:\w+)?\s*=\s*["'][^"']*["']/g, '');
+    assert.doesNotMatch(withoutNamespaces, /(https?:|data:|javascript:)/i);
+  });
+
+  test('the served badge is the source file from brand/logo, unchanged', () => {
+    assert.equal(svg, read(BADGE_SOURCE_PATH));
+  });
+});
+
+describe('retired bottle-cap brand', () => {
+  test('cap.svg is gone from docs/assets', () => {
+    assert.ok(!existsSync(join(DOCS, 'assets', 'cap.svg')));
+  });
+
+  test('no retired brand colour appears anywhere in docs/', () => {
+    const found = [];
+    for (const f of docsTextFiles) {
+      const body = read(join(DOCS, f)).toUpperCase();
+      for (const hex of RETIRED_HEXES) if (body.includes(hex)) found.push(`${hex} in docs/${f}`);
+    }
+    assert.deepEqual(found, []);
+  });
+
+  test('no page or stylesheet refers to cap.svg or the old copper, steel and paper tokens', () => {
+    const found = [];
+    for (const f of docsTextFiles) {
+      for (const m of read(join(DOCS, f)).matchAll(/cap\.svg|--(copper|steel|paper)(?![\w])|--paper-border|logo__(mark|nation)/gi)) {
+        found.push(`${m[0]} in docs/${f}`);
+      }
+    }
+    assert.deepEqual(found, []);
+  });
+});
+
+describe('site.css: badge colours', () => {
+  test('defines the eight badge colours exactly as in CLAUDE.md', () => {
     for (const [name, hex] of Object.entries(BRAND)) {
       assert.equal(token(name).toUpperCase(), hex, `--${name}`);
     }
   });
 
-  test('uses only brand palette colours', () => {
+  test('uses only badge palette colours', () => {
     const palette = new Set(Object.values(BRAND));
     const hexes = (cssNoComments.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).map((h) => h.toUpperCase());
     for (const h of hexes) assert.ok(palette.has(h), `off-brand colour ${h}`);
-    assert.doesNotMatch(cssNoComments, /\b(rgb|rgba|hsl|hsla)\(/i, 'colours should come from the brand tokens');
+    assert.doesNotMatch(cssNoComments, /\b(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\(/i, 'colours should come from the badge tokens');
   });
 
-  test('copper is used only for the logo cap', () => {
-    assert.doesNotMatch(cssNoComments, /var\(--copper\)/, 'site.css must not apply --copper');
-    const copperHexes = cssNoComments.match(/#B8741F/gi) ?? [];
-    assert.equal(copperHexes.length, 1, 'copper hex appears only in the token definition');
-    for (const page of pages) {
-      assert.doesNotMatch(read(join(DOCS, page)), /#B8741F/i, `${page} uses copper`);
+  test('uses no named colours such as white, black, navy or teal', () => {
+    // Words allowed in colour-bearing declarations; anything else is a named colour.
+    const allowed = new Set([
+      'transparent', 'currentcolor', 'inherit', 'initial', 'unset', 'revert', 'none', 'auto',
+      'solid', 'dashed', 'dotted', 'double', 'underline', 'var', 'calc', 'linear-gradient', 'deg',
+      'light', 'dark', 'normal',
+    ]);
+    const colourProps = /^(color|background(-color|-image)?|border(-(top|right|bottom|left))?(-color)?|outline(-color)?|text-decoration(-color)?|accent-color|caret-color|fill|stroke|box-shadow|column-rule|color-scheme)$/;
+    const offenders = [];
+    for (const r of cssRules) {
+      for (const [prop, value] of Object.entries(r.decls)) {
+        if (!colourProps.test(prop)) continue;
+        const words = value.replace(/var\([^)]*\)|#[0-9a-fA-F]+\b/g, ' ').match(/[a-z][a-z-]*/gi) ?? [];
+        for (const w of words) {
+          if (!allowed.has(w.toLowerCase()) && !/^(px|rem|em|%)$/.test(w)) offenders.push(`${r.selectors.join(', ')} { ${prop}: ${value} }`);
+        }
+      }
     }
-    assert.match(read(join(DOCS, 'assets', 'cap.svg')), /#B8741F/i, 'the cap is copper');
+    assert.deepEqual([...new Set(offenders)], []);
   });
 
-  test('the logo NATION lines are thin steel-blue rules', () => {
-    const rule = cssNoComments.match(/\.logo__nation::before,\s*\.logo__nation::after\s*\{([^}]*)\}/);
-    assert.ok(rule, 'NATION line rule present');
-    assert.match(rule[1], /height:\s*1px/);
-    assert.match(rule[1], /background:\s*var\(--steel\)/);
+  test('every var() in site.css refers to a defined custom property', () => {
+    const defined = new Set([...cssNoComments.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+    const missing = [...cssNoComments.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]).filter((n) => !defined.has(n));
+    assert.deepEqual([...new Set(missing)], []);
+  });
+
+  test('the page background is white and body text is navy', () => {
+    const body = ruleFor('body');
+    assert.ok(usesToken(body.decls.background ?? body.decls['background-color'], 'white'), `body background: ${body.decls.background}`);
+    assert.ok(usesToken(body.decls.color, 'navy'), `body color: ${body.decls.color}`);
+  });
+
+  test('cards are pale blue with a line-coloured border', () => {
+    const card = ruleFor('.card');
+    assert.ok(usesToken(card.decls.background ?? card.decls['background-color'], 'pale'), `.card background: ${card.decls.background}`);
+    assert.ok(usesToken(card.decls.border, 'line'), `.card border: ${card.decls.border}`);
+  });
+
+  test('the footer is navy with sky links', () => {
+    const footer = ruleFor('.site-footer');
+    assert.ok(usesToken(footer.decls.background ?? footer.decls['background-color'], 'navy'), `.site-footer background: ${footer.decls.background}`);
+    assert.ok(usesToken(ruleFor('.site-footer a')?.decls.color, 'sky'), '.site-footer a is sky');
+  });
+
+  test('the result card is navy with sky labels and white numbers', () => {
+    const dark = ruleFor('.card--dark');
+    assert.ok(usesToken(dark.decls.background ?? dark.decls['background-color'], 'navy'), `.card--dark background: ${dark.decls.background}`);
+    assert.ok(usesToken(dark.decls.color, 'white'), `.card--dark color: ${dark.decls.color}`);
+    assert.ok(usesToken(ruleFor('.card--dark .result__label')?.decls.color, 'sky'), '.card--dark .result__label is sky');
+    // The numbers inherit white from .card--dark: .result__value must not set its own colour.
+    assert.equal(ruleFor('.result__value')?.decls.color, undefined, '.result__value sets no colour of its own');
   });
 });
 
-describe('site.css: text contrast meets WCAG AA (4.5:1)', () => {
+describe('site.css: the badge in the header', () => {
+  const img = ruleFor('.logo img');
+
+  test('the badge is sized by height with an automatic width, so it never stretches', () => {
+    assert.ok(img, '.logo img rule present');
+    assert.ok(img.decls.height, '.logo img sets a height');
+    assert.equal(img.decls.width, 'auto');
+    for (const r of cssRules.filter((x) => x.selectors.includes('.logo img'))) {
+      assert.ok(r.decls.width === undefined || r.decls.width === 'auto', `${r.media || 'base'} sets width ${r.decls.width}`);
+      assert.ok(!r.decls['object-fit'] || r.decls['object-fit'] === 'contain', `object-fit ${r.decls['object-fit']}`);
+    }
+  });
+
+  test('the badge has no max-width cap that could squash it on a narrow screen', () => {
+    // The global img { max-width: 100% } plus a fixed height would distort the badge.
+    assert.equal(img.decls['max-width'], 'none');
+  });
+
+  test('the badge is 4rem tall on phones and 5rem from 40em', () => {
+    const base = screenRules.find((r) => !r.media && r.selectors.includes(':root'));
+    const wide = screenRules.find((r) => /min-width:\s*40em/.test(r.media) && r.selectors.includes(':root'));
+    assert.ok(usesToken(img.decls.height, 'badge-height'), `.logo img height: ${img.decls.height}`);
+    assert.equal(base.decls['--badge-height'], '4rem');
+    assert.equal(wide?.decls['--badge-height'], '5rem');
+  });
+
+  test('the header keeps clear space of a quarter of the badge height on every side', () => {
+    const base = screenRules.find((r) => !r.media && r.selectors.includes(':root'));
+    const wide = screenRules.find((r) => /min-width:\s*40em/.test(r.media) && r.selectors.includes(':root'));
+    assert.match(base.decls['--badge-clear'], /^calc\(\s*var\(--badge-height\)\s*\/\s*4\s*\)$/);
+    const inner = ruleFor('.site-header__inner');
+    assert.ok(usesToken(inner.decls['padding-block'], 'badge-clear'), `padding-block: ${inner.decls['padding-block']}`);
+    assert.ok(usesToken(inner.decls.gap, 'badge-clear'), `gap: ${inner.decls.gap}`);
+    // Left and right: the container gutter must be at least the clear space.
+    for (const [label, root] of [['phones', base], ['from 40em', wide]]) {
+      const height = remOf(root.decls['--badge-height'] ?? base.decls['--badge-height']);
+      const gutter = remOf(root.decls['--gutter'] ?? base.decls['--gutter']);
+      assert.ok(gutter >= height / 4, `${label}: gutter ${gutter}rem < clear space ${height / 4}rem`);
+    }
+  });
+});
+
+describe('site.css: text contrast meets WCAG AA', () => {
   const pairs = [
-    ['navy text on paper', 'navy', 'paper'],
-    ['steel-blue links on paper', 'steel', 'paper'],
-    ['muted text on paper', 'muted', 'paper'],
-    ['paper text on the navy footer', 'paper', 'navy'],
-    ['paper-border text on the navy footer', 'paper-border', 'navy'],
+    ['navy text on white', 'navy', 'white'],
+    ['navy text on pale blue', 'navy', 'pale'],
+    ['muted text on white', 'muted', 'white'],
+    ['muted text on pale blue', 'muted', 'pale'],
+    ['deep-teal links on white', 'teal-deep', 'white'],
+    ['deep-teal links on pale blue', 'teal-deep', 'pale'],
+    ['white text on navy', 'white', 'navy'],
+    ['sky links and labels on navy', 'sky', 'navy'],
+    ['pale-blue text on navy', 'pale', 'navy'],
+    ['white text on deep teal (button hover, selection)', 'white', 'teal-deep'],
   ];
   for (const [label, fg, bg] of pairs) {
     test(`${label} is at least 4.5:1`, () => {
@@ -478,9 +733,81 @@ describe('site.css: text contrast meets WCAG AA (4.5:1)', () => {
     });
   }
 
-  test('focus rings are at least 3:1 against their background', () => {
-    assert.ok(contrast(token('steel'), token('paper')) >= 3, 'steel ring on paper');
-    assert.ok(contrast(token('paper'), token('navy')) >= 3, 'paper ring on navy footer');
+  test('hop teal on white is at least 3:1, enough for text 24 px or larger', () => {
+    const r = contrast(token('teal'), token('white'));
+    assert.ok(r >= 3, `hop teal on white: ${r.toFixed(2)}:1`);
+  });
+});
+
+describe('site.css: colour roles from CLAUDE.md', () => {
+  test('navy areas are found in site.css (footer and result card)', () => {
+    assert.ok(navyAreas.includes('.site-footer'), `navy areas: ${navyAreas.join(', ')}`);
+    assert.ok(navyAreas.includes('.card--dark'), `navy areas: ${navyAreas.join(', ')}`);
+  });
+
+  test('sky is text only inside navy areas, never on white or pale', () => {
+    const offenders = textSelectors('sky').filter(({ s }) => !insideArea(s, navyAreas)).map(({ s }) => s);
+    assert.deepEqual(offenders, [], `navy areas: ${navyAreas.join(', ')}`);
+  });
+
+  test('pale blue is text only inside navy areas', () => {
+    const offenders = textSelectors('pale').filter(({ s }) => !insideArea(s, navyAreas)).map(({ s }) => s);
+    assert.deepEqual(offenders, []);
+  });
+
+  test('white text sits only on navy or deep teal', () => {
+    const offenders = textSelectors('white')
+      .filter(({ s, rule }) => {
+        const bg = rule.decls.background ?? rule.decls['background-color'];
+        return !insideArea(s, navyAreas) && !usesToken(bg, 'navy') && !usesToken(bg, 'teal-deep');
+      })
+      .map(({ s }) => s);
+    assert.deepEqual(offenders, []);
+  });
+
+  test('hop teal is text only at 24 px or larger', () => {
+    const offenders = textSelectors('teal')
+      .filter(({ rule }) => !(fontSizePx(rule) >= 24))
+      .map(({ s, rule }) => `${s} (font-size ${rule.decls['font-size'] ?? 'inherited'})`);
+    assert.deepEqual(offenders, []);
+  });
+
+  test('the line colour is never used for text', () => {
+    assert.deepEqual(textSelectors('line').map(({ s }) => s), []);
+  });
+});
+
+describe('site.css: focus rings are at least 3:1 against their background', () => {
+  const ringColour = (selector) => {
+    const r = ruleFor(selector);
+    assert.ok(r, `${selector} rule present`);
+    const c = resolveColour(r.decls['outline-color'] ?? r.decls.outline);
+    assert.ok(c, `${selector} sets an outline colour`);
+    return c;
+  };
+
+  test('the default focus ring is at least 3:1 on white and on pale blue', () => {
+    const c = ringColour(':focus-visible');
+    for (const bg of ['white', 'pale']) {
+      const r = contrast(c, token(bg));
+      assert.ok(r >= 3, `${c} on ${bg}: ${r.toFixed(2)}:1`);
+    }
+  });
+
+  test('form-control focus rings are at least 3:1 on white and on pale blue', () => {
+    const c = ringColour('input[type="text"]:focus-visible');
+    for (const bg of ['white', 'pale']) {
+      const r = contrast(c, token(bg));
+      assert.ok(r >= 3, `${c} on ${bg}: ${r.toFixed(2)}:1`);
+    }
+  });
+
+  test('focus rings in the navy footer and the navy result card are at least 3:1 on navy', () => {
+    for (const sel of ['.site-footer :focus-visible', '.card--dark :focus-visible']) {
+      const c = ringColour(sel);
+      const r = contrast(c, token('navy'));
+      assert.ok(r >= 3, `${sel}: ${c} on navy ${r.toFixed(2)}:1`);
+    }
   });
 });
 
