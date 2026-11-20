@@ -42,6 +42,7 @@ The PM never approves a gate itself. Gates are cards in the "Needs you" list on 
 - The site's logo and colours must match the "three hops" badge used on the social channels (see Brand in `CLAUDE.md`). The copper bottle-cap logo is retired.
 - The calculator shows a short guide for each beer style in the style menu: the usual CO2 range and practical advice.
 - A social profile kit in the same identity for Instagram, YouTube, Facebook and TikTok: profile picture, banners where a channel has one, and matching bios. Toon uploads it to the channels himself.
+- The site is Thai and English. English first on the preview; at go-live all communication is Thai first. A native speaker Toon knows checks the Thai before it ships.
 
 ## Out of scope for v1
 

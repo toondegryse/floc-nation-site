@@ -26,7 +26,7 @@ The site must match the identity already used on the social channels: the "three
   - Pale blue `#EEF4F8`: cards and panels on the white page
   - Line `#D5DEE6`: borders and dividers (decoration only)
   - Muted text `#4F5B6B`: secondary text on white or pale blue
-- Type: Manrope. ExtraBold (800) for headlines; 500 and 600 for everything else. The badge lettering is artwork, not a font.
+- Type: Manrope for Latin text. ExtraBold (800) for headlines; 500 and 600 for everything else. Thai text uses Noto Sans Thai at the same weights (Manrope has no Thai letters). The badge lettering is artwork, not a font.
 - Tagline: "Brewed and built in Bangkok".
 - Look: professional and calm, like the badge. Not playful, not kid-like.
 - Voice: practical and plain. Talk about real brewing problems and how they get fixed. Short sentences. No hype words.
@@ -37,10 +37,11 @@ The site must match the identity already used on the social channels: the "three
 
 - Plain HTML, CSS and JavaScript. No framework, no build step, no npm dependencies.
 - The site lives in `docs/`, which GitHub Pages serves at https://toondegryse.github.io/floc-nation-site/
-- Pages: `docs/index.html` (home) and `docs/calculator.html`.
+- Pages: `docs/index.html` (home) and `docs/calculator.html`, with Thai versions in `docs/th/` (`docs/th/index.html`, `docs/th/calculator.html`).
+- Languages: the site is Thai and English. On the preview, English is the default and Thai is one tap away; every page links to its other-language twin and sets `lang` correctly. At go-live (gate G3) Thai becomes the default and all Floc Nation communication is Thai first (site, social bios, posts). Thai text ships only after a native speaker Toon chooses has checked it (the Thai check gate).
 - Calculator maths: `docs/js/priming.js`, an ES module of pure functions with no DOM code.
 - Tests: `tests/*.test.js`, run with `npm test` (Node's built-in test runner, no packages).
-- Nothing loads from other sites. Manrope (free under the SIL Open Font Licence) is self-hosted in `docs/fonts/` with its licence file. If the font files can't be downloaded yet, loading Manrope from Google Fonts is allowed on the preview only. It must be self-hosted before gate G3.
+- Nothing loads from other sites. Manrope and Noto Sans Thai (both free under the SIL Open Font Licence) are self-hosted in `docs/fonts/` with their licence files. If the font files can't be downloaded yet, loading them from Google Fonts is allowed on the preview only. They must be self-hosted before gate G3.
 - Every page keeps `<meta name="robots" content="noindex">` until gate G3 is approved.
 - Mobile first: everything must work at 360 px wide.
 - No personal details anywhere on the site: no personal names, addresses, phone numbers or personal email addresses.
