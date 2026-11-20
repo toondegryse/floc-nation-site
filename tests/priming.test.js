@@ -584,6 +584,85 @@ describe('plain decimal text only', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Added by the tester in the T6a review.
+// ---------------------------------------------------------------------------
+
+describe('plain decimal text only (T6a review)', () => {
+  const FIELDS = [
+    {
+      field: 'litres',
+      notANumber: 'Beer volume must be a number.',
+      negative: 'Beer volume must be more than 0 litres.',
+    },
+    {
+      field: 'tempC',
+      notANumber: 'Temperature must be a number.',
+      negative: 'Temperature must be between 0 and 40 °C.',
+    },
+    {
+      field: 'targetVols',
+      notANumber: 'Target CO2 must be a number.',
+      negative: 'Target CO2 must be more than 0 volumes.',
+    },
+    {
+      field: 'bottleMl',
+      notANumber: 'Bottle size must be a number.',
+      negative: 'Bottle size must be more than 0 ml.',
+    },
+  ];
+
+  function assertNotANumberInEveryField(texts) {
+    for (const { field, notANumber } of FIELDS) {
+      for (const text of texts) {
+        assertInputError(() => calc({ [field]: text }), field, notANumber);
+      }
+    }
+  }
+
+  test('rejects digit-group underscores ("1_000") as not a number in every field', () => {
+    assertNotANumberInEveryField(['1_000', '2_0']);
+  });
+
+  test('rejects non-ASCII digits (Arabic-Indic "٢٠", full-width "２０") as not a number in every field', () => {
+    assertNotANumberInEveryField(['٢٠', '２０']);
+  });
+
+  test('rejects a number with letters after it ("20abc") as not a number in every field', () => {
+    assertNotANumberInEveryField(['20abc', '20 L', '2.4vols']);
+  });
+
+  test('rejects a doubled sign ("--20", "+-20") as not a number in every field', () => {
+    assertNotANumberInEveryField(['--20', '+-20', '++20']);
+  });
+
+  test('negative text ("-5") gets each field\'s range message, not "must be a number"', () => {
+    for (const { field, negative } of FIELDS) {
+      assertInputError(() => calc({ [field]: '-5' }), field, negative);
+    }
+  });
+
+  test('zero text ("0.0") gets the "more than 0" message for volume, target CO2 and bottle size', () => {
+    for (const { field, negative } of FIELDS.filter((f) => f.field !== 'tempC')) {
+      assertInputError(() => calc({ [field]: '0.0' }), field, negative);
+    }
+  });
+
+  test('zero text ("0.0") is accepted as 0 °C', () => {
+    assert.deepEqual(calc({ tempC: '0.0' }), calc({ tempC: 0 }));
+  });
+
+  test('rejects a very long non-number quickly (50,000 characters in under 250 ms)', () => {
+    // Digits then one bad character is the slowest shape for a regex with two
+    // ways to split a run of digits. A linear check takes well under 1 ms here.
+    const text = `${'1'.repeat(50_000)}x`;
+    const start = performance.now();
+    assertInputError(() => calc({ litres: text }), 'litres', 'Beer volume must be a number.');
+    const ms = performance.now() - start;
+    assert.ok(ms < 250, `took ${ms.toFixed(0)} ms to reject ${text.length} characters`);
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')

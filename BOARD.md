@@ -13,12 +13,13 @@ None.
 
 ## In review
 
-- **T6a · Reject hex, binary and octal text in number fields** · builder · Fri 20 Nov
-  - Files: `docs/js/priming.js`, `tests/priming.test.js`
-  - Built: number text must be a plain decimal; 11 new module tests; the 4 failing calculator tests now pass (311 tests, 0 fail).
+None.
 
 ## To do
 
+- **T6a · Reject hex, binary and octal text in number fields** · builder · failed review once (Fri 20 Nov)
+  - Files: `docs/js/priming.js`, `tests/priming.test.js`
+  - Findings (tester fail, security needs changes, same issue): hex text is now rejected correctly, but the new `DECIMAL_TEXT` regex is slow on long input (digits then one bad character take quadratic time: about 3 s at 50,000 characters). Fix: `/^[+-]?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i` (same matches, linear time). Test "rejects a very long non-number quickly" fails until then.
 - **T6 · Calculator test pass** · tester · needs: T6a · failed review once (Fri 20 Nov)
   - Done when: the module tests pass, edge cases are covered, and the numbers on the page match the module for the reference cases.
   - Findings: everything passes except hex/binary/octal input (4 tests in `tests/calculator.test.js`, 120 tests added). Rerun after T6a.
