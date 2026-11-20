@@ -335,7 +335,97 @@ for (const page of pages) {
       assert.doesNotMatch(html, /flock/i);
     });
   });
+
+  describe(`${page}: form labels and ARIA references`, () => {
+    const allTags = tags(html);
+    const ids = allTags.map((t) => attr(t, 'id')).filter(Boolean);
+
+    test('every input, select and textarea has a label', () => {
+      const re = /<(input|select|textarea)\b[^>]*>/gi;
+      for (const m of html.matchAll(re)) {
+        const t = m[0];
+        if (/^(hidden|submit|button|reset|image)$/i.test(attr(t, 'type') ?? '')) continue;
+        const id = attr(t, 'id');
+        const hasFor = id && allTags.some((x) => /^<label\b/i.test(x) && attr(x, 'for') === id);
+        const before = html.slice(0, m.index);
+        const wrapped = before.lastIndexOf('<label') > before.lastIndexOf('</label>');
+        assert.ok(hasFor || wrapped || attr(t, 'aria-label'), `unlabelled control: ${t}`);
+      }
+    });
+
+    test('every id named by for, aria-describedby, aria-labelledby or aria-controls exists', () => {
+      for (const t of allTags) {
+        for (const a of ['for', 'aria-describedby', 'aria-labelledby', 'aria-controls']) {
+          for (const ref of (attr(t, a) ?? '').split(/\s+/).filter(Boolean)) {
+            assert.ok(ids.includes(ref), `${a}="${ref}" has no element: ${t}`);
+          }
+        }
+      }
+    });
+
+    test('ids are unique', () => {
+      const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+      assert.deepEqual(dupes, []);
+    });
+  });
+
+  describe(`${page}: header navigation`, () => {
+    const nav = html.match(/<nav\b[^>]*aria-label="Main"[^>]*>([\s\S]*?)<\/nav>/i)?.[1] ?? '';
+    const navLinks = links(nav);
+    const pageOf = (href) => (['./', '.', 'index.html', './index.html'].includes(href) ? 'index.html' : href);
+
+    test('header nav links to the home page and the calculator', () => {
+      const targets = navLinks.map((l) => pageOf(l.href)).sort();
+      assert.deepEqual(targets, ['calculator.html', 'index.html']);
+    });
+
+    test('header nav marks this page, and only this page, as current', () => {
+      const current = navLinks.filter((l) => attr(l.tag, 'aria-current') === 'page').map((l) => pageOf(l.href));
+      assert.deepEqual(current, [page]);
+    });
+  });
 }
+
+// ==========================================================================
+// Calculator page
+// ==========================================================================
+
+describe('calculator.html: page wiring', { skip: !pages.includes('calculator.html') && 'no calculator page yet' }, () => {
+  const html = pages.includes('calculator.html') ? read(join(DOCS, 'calculator.html')) : '';
+
+  test('loads js/calculator.js as an ES module', () => {
+    const s = tags(html).find((t) => /^<script\b/i.test(t) && attr(t, 'src') === 'js/calculator.js');
+    assert.ok(s, 'script tag for js/calculator.js');
+    assert.equal(attr(s, 'type'), 'module');
+  });
+
+  test('results, safety notes and prompt sit inside one polite live region', () => {
+    const live = tags(html).filter((t) => attr(t, 'aria-live'));
+    assert.equal(live.length, 1, 'exactly one live region');
+    assert.equal(attr(live[0], 'aria-live'), 'polite');
+    // Take the live element through its matching closing tag.
+    const start = html.indexOf(live[0]);
+    const name = live[0].match(/^<([a-z]+)/i)[1];
+    const re = new RegExp(`<${name}\\b|</${name}>`, 'gi');
+    re.lastIndex = start;
+    let depth = 0;
+    let end = -1;
+    for (let m = re.exec(html); m; m = re.exec(html)) {
+      depth += m[0].startsWith('</') ? -1 : 1;
+      if (depth === 0) { end = re.lastIndex; break; }
+    }
+    const region = html.slice(start, end);
+    for (const id of ['result-prompt', 'note-high-pressure', 'note-no-sugar', 'batch-grams', 'per-bottle-grams']) {
+      assert.match(region, new RegExp(`\\sid="${id}"`), `#${id} is inside the live region`);
+    }
+  });
+
+  test('every inline error message starts hidden', () => {
+    const errors = tags(html).filter((t) => /\bfield-error\b/.test(attr(t, 'class') ?? ''));
+    assert.ok(errors.length >= 4, 'error slots present');
+    for (const t of errors) assert.match(t, /\shidden(\s|>|=)/, `${t} should start hidden`);
+  });
+});
 
 // ==========================================================================
 // Shared stylesheet
