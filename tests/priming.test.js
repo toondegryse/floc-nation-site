@@ -854,6 +854,44 @@ describe('plain decimal text only (T6a second review, linear-time check)', () =>
 });
 
 
+// ---------------------------------------------------------------------------
+// Added by the tester in the T6 second run.
+// ---------------------------------------------------------------------------
+
+describe('target exactly at the residual CO2 (T6 second run)', () => {
+  // The residual CO2 from the PROJECT.md formula, worked out by hand. The
+  // coefficients are short decimals, so the true residual is a short decimal
+  // too. A brewer who types exactly this target is at the residual, not above it.
+  const EXACT_RESIDUALS = [
+    // 0 °C = 32 °F: 3.0378 − 0.050062 × 32 + 0.00026555 × 1024 = 1.7077392
+    { tempC: 0, residual: '1.7077392' },
+    // 20 °C = 68 °F: 3.0378 − 3.404216 + 1.2279032 = 0.8614872
+    { tempC: 20, residual: '0.8614872' },
+    // 25 °C = 77 °F: 3.0378 − 3.854774 + 1.57444595 = 0.75747195
+    { tempC: 25, residual: '0.75747195' },
+    // 30 °C = 86 °F: 3.0378 − 4.305332 + 1.9640078 = 0.6964758
+    { tempC: 30, residual: '0.6964758' },
+    // 40 °C = 104 °F: 3.0378 − 5.206448 + 2.8721888 = 0.7035408
+    { tempC: 40, residual: '0.7035408' },
+  ];
+
+  // Parked under "Needs you" (T6 failed review twice). Drop the todo once the
+  // module counts a target at the residual as "no sugar needed".
+  test('a target typed as the exact PROJECT.md residual flags no sugar needed and gives 0 g (0, 20, 25, 30, 40 °C)', { todo: 'T6 parked: target exactly at the residual misses the no-sugar note (floating-point); waiting on Toon' }, () => {
+    const wrong = [];
+    for (const { tempC, residual } of EXACT_RESIDUALS) {
+      const result = calc({ tempC, targetVols: residual });
+      if (!result.noSugarNeeded || result.batchGrams !== 0 || result.perBottleGrams !== 0) {
+        wrong.push(
+          `${tempC} °C, target "${residual}": noSugarNeeded ${result.noSugarNeeded}, ` +
+            `batchGrams ${result.batchGrams}, perBottleGrams ${result.perBottleGrams}`,
+        );
+      }
+    }
+    assert.deepEqual(wrong, [], `expected no sugar at the residual:\n${wrong.join('\n')}`);
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')

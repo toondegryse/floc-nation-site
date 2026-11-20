@@ -644,6 +644,31 @@ describe('typed text in every text field (T6a second review)', () => {
   }
 });
 
+// Added by the tester in the T6 second run.
+describe('safety notes: more edge cases (T6 second run)', () => {
+  // Parked under "Needs you" (T6 failed review twice). Drop the todo once the
+  // module counts a target at the residual as "no sugar needed".
+  test('a target typed as the exact PROJECT.md residual (0.8614872 at 20 °C) shows the no-sugar note and 0.0 g', { todo: 'T6 parked: target exactly at the residual misses the no-sugar note (floating-point); waiting on Toon' }, () => {
+    // 20 °C = 68 °F: 3.0378 − 0.050062 × 68 + 0.00026555 × 68² = 0.8614872 exactly.
+    const v = view({ tempC: '20', targetVols: '0.8614872' });
+    assert.deepEqual(v.notes, [NO_SUGAR_TEXT], `notes: ${JSON.stringify(v.notes)}, batch ${v.result?.batchGrams} g`);
+    assert.equal(v.batchText, '0.0');
+    assert.equal(v.perBottleText, '0.00');
+  });
+
+  test('table sugar shows the same safety notes as dextrose', () => {
+    for (const targetVols of ['0.5', '2.4', '3.0', '3.01', '3.5']) {
+      assert.deepEqual(
+        view({ targetVols, sugar: 'table' }).notes,
+        view({ targetVols, sugar: 'dextrose' }).notes,
+        `target ${targetVols}`,
+      );
+    }
+    assert.deepEqual(view({ targetVols: '3.5', sugar: 'table' }).notes, [HIGH_PRESSURE_TEXT]);
+    assert.deepEqual(view({ targetVols: '0.5', sugar: 'table' }).notes, [NO_SUGAR_TEXT]);
+  });
+});
+
 // ==========================================================================
 // Part 2: the DOM wiring, run against a stand-in DOM
 // ==========================================================================
@@ -870,5 +895,78 @@ describe('page wiring (stand-in DOM)', () => {
     page.type('custom-bottle-ml', '750');
     assert.equal(page.text('per-bottle-label'), 'Dextrose per 750 ml bottle');
     assert.equal(page.text('per-bottle-grams'), moduleResult({ ...BASE, bottleMl: 750 }).perBottleGrams.toFixed(2));
+  });
+});
+
+// Added by the tester in the T6 second run.
+describe('page wiring: more edge cases (stand-in DOM, T6 second run)', () => {
+  test('picking each style fills in its default target and shows the calculatePriming figures', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    for (const s of STYLES) {
+      page.pick('style', s.id);
+      assert.equal(page.el('target-vols').value, s.target, `${s.name} target`);
+      const expected = moduleResult({ ...BASE, targetVols: s.target });
+      assert.equal(page.text('batch-grams'), expected.batchGrams.toFixed(1), `${s.name} batch`);
+      assert.equal(page.text('per-bottle-grams'), expected.perBottleGrams.toFixed(2), `${s.name} per bottle`);
+    }
+  });
+
+  test('after picking a style the target stays editable and the figures follow the typed target', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    page.pick('style', 'lager-pilsner');
+    assert.equal(page.el('target-vols').value, '2.5');
+    page.type('target-vols', '2.7');
+    assert.equal(page.el('style').value, 'lager-pilsner', 'style is kept');
+    assert.equal(page.el('target-vols').value, '2.7', 'typed target is kept');
+    assert.equal(page.text('batch-grams'), moduleResult({ ...BASE, targetVols: '2.7' }).batchGrams.toFixed(1));
+  });
+
+  test('picking each listed bottle size updates the per-bottle label and figure', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    for (const ml of PAGE_BOTTLE_SIZES) {
+      page.pick('bottle-size', ml);
+      assert.equal(page.text('per-bottle-label'), `Dextrose per ${ml} ml bottle`);
+      assert.equal(page.text('per-bottle-grams'), moduleResult({ ...BASE, bottleMl: ml }).perBottleGrams.toFixed(2), `${ml} ml`);
+      assert.ok(!page.shown('custom-bottle'), `custom field hidden for ${ml} ml`);
+    }
+  });
+
+  test('a volume of 0 or less hides the figures and shows the volume error', async () => {
+    for (const litres of ['0', '-5']) {
+      const page = await openWithCase(REFERENCE_CASES[0]);
+      assert.ok(page.shown('result-values'), 'figures shown before');
+      page.type('litres', litres);
+      assert.ok(!page.shown('result-values'), `figures hidden for ${litres} L`);
+      assert.ok(page.shown('litres-error'));
+      assert.equal(page.text('litres-error'), MSG.litresPositive);
+      assert.ok(!page.shown('note-high-pressure') && !page.shown('note-no-sugar'), 'no notes');
+    }
+  });
+
+  test('the high-pressure note hides again when the target goes back to 3.0 or below', async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], targetVols: '3.5' });
+    assert.ok(page.shown('note-high-pressure'));
+    page.type('target-vols', '3.0');
+    assert.ok(!page.shown('note-high-pressure'), 'hidden at exactly 3.0');
+    page.type('target-vols', '3.01');
+    assert.ok(page.shown('note-high-pressure'), 'shown at 3.01');
+    page.type('target-vols', '2.4');
+    assert.ok(!page.shown('note-high-pressure'), 'hidden at 2.4');
+    assert.ok(page.shown('result-values'), 'figures still shown');
+  });
+
+  test('emptying a field after a result hides the figures and shows its "Enter" message', async () => {
+    const fields = [
+      ['litres', 'litres-error', MSG.litresEnter],
+      ['temp-c', 'temp-c-error', MSG.tempEnter],
+      ['target-vols', 'target-vols-error', MSG.targetEnter],
+    ];
+    for (const [id, errorId, message] of fields) {
+      const page = await openWithCase(REFERENCE_CASES[0]);
+      page.type(id, '');
+      assert.ok(!page.shown('result-values'), `figures hidden when #${id} is empty`);
+      assert.ok(page.shown(errorId));
+      assert.equal(page.text(errorId), message);
+    }
   });
 });
