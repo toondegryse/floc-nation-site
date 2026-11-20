@@ -6,8 +6,9 @@
  *      and returns exactly what the page shows. Node can import it for tests.
  *   2. initPage(document): the DOM code. It runs only in a browser.
  *
- * The maths and the input checks live in priming.js. This file reads the
- * fields, rounds the numbers for display and decides what to show.
+ * The maths and the input checks live in priming.js, and the style guide
+ * text in styles.js. This file reads the fields, rounds the numbers for
+ * display and decides what to show.
  */
 
 import {
@@ -18,6 +19,7 @@ import {
   DEFAULT_BOTTLE_ML,
   TEMP_RANGE_C,
 } from './priming.js';
+import { guideForStyle } from './styles.js';
 
 // ---------------------------------------------------------------------------
 // Page constants
@@ -95,6 +97,32 @@ export function targetForStyle(styleId) {
   return preset && preset.default !== null ? formatVols(preset.default) : null;
 }
 
+/** Label of the guide's first line for a style with a range. */
+export const GUIDE_RANGE_LABEL = 'Usual range';
+
+/**
+ * The lines of the style guide shown under the style menu.
+ *
+ * A style with a range leads with "Usual range: <min> to <max> volumes.",
+ * built from STYLE_PRESETS, followed on the same line by how it should feel
+ * in the glass (styles.js). Its other lines follow. Custom has no range, so
+ * it shows its own lines only.
+ *
+ * @param {string} styleId An id from STYLE_PRESETS.
+ * @returns {{ points: ReadonlyArray<{ label: string, text: string }> }|null}
+ *   One { label, text } per line, shown as "label: text", or null for an
+ *   unknown id.
+ */
+export function styleGuideView(styleId) {
+  const guide = guideForStyle(styleId);
+  const preset = findStyle(styleId);
+  if (!guide || !preset) return null;
+  const lines = hasRange(preset)
+    ? [{ label: GUIDE_RANGE_LABEL, text: [`${rangeText(preset)}.`, guide.feel].filter(Boolean).join(' ') }]
+    : [];
+  return { points: [...lines, ...guide.points] };
+}
+
 /**
  * Everything the page shows for the given field values.
  *
@@ -103,7 +131,7 @@ export function targetForStyle(styleId) {
  * @param {string} [raw.litres]         Beer volume in litres.
  * @param {string} [raw.bottleSize]     '330', '500', '620', '640' or 'custom'.
  * @param {string} [raw.customBottleMl] Bottle size in ml, used when bottleSize is 'custom'.
- * @param {string} [raw.style]          A STYLE_PRESETS id. Only changes the target hint.
+ * @param {string} [raw.style]          A STYLE_PRESETS id. Changes the target hint and the style guide.
  * @param {string} [raw.targetVols]     Target CO2 in volumes.
  * @param {string} [raw.tempC]          Highest temperature after fermentation, in °C.
  * @param {string} [raw.sugar]          'dextrose' or 'table'.
@@ -123,6 +151,7 @@ export function targetForStyle(styleId) {
  *   errors: Object<string, string>,
  *   prompt: string,
  *   targetHint: string,
+ *   styleGuide: { points: ReadonlyArray<{ label: string, text: string }> }|null,
  *   showCustomBottle: boolean,
  *   result: object|null
  * }}
@@ -132,6 +161,8 @@ export function targetForStyle(styleId) {
  *   errors maps a field (litres, bottleSize, customBottleMl, targetVols,
  *   tempC, sugar) to the message shown next to it.
  *   prompt is the line shown in the results area when there is no result.
+ *   styleGuide is styleGuideView() for the picked style: the lines shown
+ *   under the style menu, or null (no guide shown) for an unknown style id.
  *   result is what calculatePriming() returned, or null.
  */
 export function computeView(raw = {}, options = {}) {
@@ -188,6 +219,7 @@ export function computeView(raw = {}, options = {}) {
     errors,
     prompt,
     targetHint: targetHint(values.style, values.targetVols, !('targetVols' in fieldErrors)),
+    styleGuide: styleGuideView(values.style),
     showCustomBottle,
     result,
   };
@@ -219,8 +251,8 @@ function runCalculator(inputs) {
 
 function targetHint(styleId, targetRaw, targetIsValid) {
   const preset = findStyle(styleId);
-  if (!preset || preset.min === null || preset.max === null) return CUSTOM_TARGET_HINT;
-  const range = `${preset.name}: usually ${formatVols(preset.min)} to ${formatVols(preset.max)} volumes.`;
+  if (!preset || !hasRange(preset)) return CUSTOM_TARGET_HINT;
+  const range = `${preset.name}: usually ${rangeText(preset)}.`;
   const target = Number(targetRaw);
   const outside = targetIsValid && !isEmpty(targetRaw) && (target < preset.min || target > preset.max);
   return outside ? `${range} Your target is outside this range.` : range;
@@ -228,6 +260,15 @@ function targetHint(styleId, targetRaw, targetIsValid) {
 
 function findStyle(styleId) {
   return STYLE_PRESETS.find((preset) => preset.id === styleId) ?? null;
+}
+
+function hasRange(preset) {
+  return preset.min !== null && preset.max !== null;
+}
+
+/** A preset's usual range, e.g. '3.3 to 4.5 volumes'. */
+function rangeText(preset) {
+  return `${formatVols(preset.min)} to ${formatVols(preset.max)} volumes`;
 }
 
 function formatVols(vols) {
@@ -280,6 +321,9 @@ const FIELD_IDS = Object.freeze({
   sugar: 'sugar',
 });
 
+/** Lines in the style guide panel on calculator.html (#style-guide-1 to -4). */
+const GUIDE_SLOTS = 4;
+
 function initPage(doc) {
   const byId = (id) => doc.getElementById(id);
   const field = (key) => byId(FIELD_IDS[key]);
@@ -299,6 +343,12 @@ function initPage(doc) {
     perBottleLabel: byId('per-bottle-label'),
     perBottleGrams: byId('per-bottle-grams'),
     residual: byId('result-residual'),
+    guide: byId('style-guide'),
+    guideLines: Array.from({ length: GUIDE_SLOTS }, (_, i) => ({
+      line: byId(`style-guide-${i + 1}`),
+      label: byId(`style-guide-${i + 1}-label`),
+      text: byId(`style-guide-${i + 1}-text`),
+    })),
   };
 
   // Lists come from priming.js, so the page and the maths always agree.
@@ -349,6 +399,17 @@ function initPage(doc) {
 
     setHidden(out.customBottle, !view.showCustomBottle);
     setText(out.targetHint, view.targetHint);
+
+    // Style guide: not a live region, so a new style doesn't interrupt the
+    // results. The style menu's aria-describedby points to it.
+    const points = view.styleGuide?.points ?? [];
+    setHidden(out.guide, points.length === 0);
+    out.guideLines.forEach((slot, i) => {
+      const point = points[i];
+      setHidden(slot.line, !point);
+      setText(slot.label, point ? point.label : '');
+      setText(slot.text, point ? point.text : '');
+    });
 
     setText(out.prompt, view.prompt);
     setHidden(out.prompt, view.prompt === '');

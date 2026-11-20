@@ -1,6 +1,6 @@
 # Social profiles
 
-The same picture, name and bio line on all four channels, so they read as one brand. The files are in this folder (`brand/social/`). The steps to tick off are in `UPLOAD.md`.
+The same picture, name and bio line on all four channels, so they read as one brand. The files are in this folder (`brand/social/`). This file is the reference. For the step-by-step list, with the same bios ready to copy, use `UPLOAD.md`.
 
 **The core line.** Every bio starts with it:
 
@@ -62,7 +62,7 @@ Brewed and built in Bangkok. Home brewing problems and tools that fix them.
 ## Facebook (Page)
 
 - **Name:** Floc Nation
-- **Username:** `flocnationbrew`. It is already set, so don't change it.
+- **Username:** check that the Page's username is `flocnationbrew`. If it isn't set yet, set it. Look for "Username" in the Page's settings.
 - **Profile picture:** `profile-picture-1080.png`
 - **Cover photo:** `facebook-cover-1702x630.png`
 - **Where:** switch to the Floc Nation Page first (your picture › See all profiles › Floc Nation). Tap the camera icon on the profile picture to change it. Tap "Edit" or the camera icon on the cover › Upload photo › Save. Bio and category are under "Edit details" (or "Add bio" in the Intro box).
@@ -74,7 +74,7 @@ Brewed and built in Bangkok. Home brewing problems and the tools that fix them.
 
 - **Website:** none for now. Add the website link after go-live (gate G3).
 - **Category (suggestion):** "Video creator", with "Community" as a second if you want one. Avoid "Brewery" or "Bar": they suggest selling beer.
-- **Check the cover:** on a phone, Facebook shows only the middle of the cover, and the profile picture sits over its lower-left corner. The badge is kept clear of both. Look at the Page on your phone after saving.
+- **Check the cover:** on a phone, Facebook shows only the middle of the cover, and the profile picture sits over its lower-left corner. The badge sits a little above the middle to stay clear of both. Look at the Page on your phone after saving.
 
 ---
 

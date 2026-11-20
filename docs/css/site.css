@@ -675,6 +675,12 @@ button:hover {
   margin-bottom: 0;
 }
 
+/* A note inside a form field (the style guide under the style menu): the
+   field's own margin already spaces it from the next field. */
+.field > .note {
+  margin-bottom: 0;
+}
+
 .result {
   margin: 0 0 var(--space-4);
 }
