@@ -13,7 +13,7 @@
   - Manrope still can't be downloaded from the run's cloud setup (checked again: GitHub, Google's font servers and npm are all blocked). It must be self-hosted before G3; the options are in the morning entry.
   - 4 tests are marked "todo": 2 older known gaps, and the 2 new checks for the T6 case, which switch back on once you decide.
   - Two PM runs worked at the same time again; this run merged the other run's Trello move and tests by hand, keeping both.
-- **Board updates to apply** (this run couldn't use Trello):
+- **Board updates** (this run couldn't use Trello; applied on the board at 15:09 from a chat with Toon):
   - T6 · Calculator test pass: move to "Needs you", comment "Failed review twice (Fri 20 Nov, tester). Only fail: a target exactly at the residual CO2 misses the no-sugar note. Approve to have it fixed, or `no: leave it`." 9 tests added; the 2 for this case are marked todo.
   - T7 · Phone and accessibility check: comment "Seen in the T6 second run (fallback font, calculator only): no sideways scroll at 360 or 320 px, a logical Tab order, reference case 1 works with the keyboard alone."
   - T9 · Calculator ready for Toon to try: comment "Waits on the T6 decision."
