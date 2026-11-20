@@ -12,6 +12,9 @@
  * Number inputs accept a number or the raw string from a form field.
  * Pass the raw string (input.value) so an empty field gets an
  * "Enter ..." message rather than "... must be a number."
+ * Text must be a plain decimal number, such as "20", "2.4" or "2e1".
+ * Hex, binary and octal text ("0x14", "0b10100", "0o24") is a typo, not
+ * a number, so it gets "... must be a number."
  */
 
 /** Grams of sugar per litre of beer for each volume of CO2. */
@@ -198,11 +201,22 @@ function readNumber(value, field) {
   if (isEmpty) {
     throw new PrimingInputError(enter, field);
   }
-  const n = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  const n = toNumber(value);
   if (!Number.isFinite(n)) {
     throw new PrimingInputError(`${name} must be a number.`, field);
   }
   return n;
+}
+
+// Plain decimal text: optional sign, digits with an optional point, optional
+// exponent. Number() alone would also read "0x14", "0b10100" and "0o24" as 20.
+const DECIMAL_TEXT = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+
+/** A number as is, plain decimal text as its value, anything else as NaN. */
+function toNumber(value) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && DECIMAL_TEXT.test(value.trim())) return Number(value);
+  return NaN;
 }
 
 function readPositive(value, field) {

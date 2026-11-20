@@ -485,6 +485,105 @@ describe('style presets and the high-pressure note', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Added in T6a: typed text must be a plain decimal number.
+// ---------------------------------------------------------------------------
+
+describe('plain decimal text only', () => {
+  const NUMBER_FIELDS = [
+    { field: 'litres', name: 'Beer volume', enter: 'Enter the beer volume in litres.' },
+    { field: 'tempC', name: 'Temperature', enter: 'Enter the highest temperature the beer reached.' },
+    { field: 'targetVols', name: 'Target CO2', enter: 'Enter a target CO2 level in volumes.' },
+    { field: 'bottleMl', name: 'Bottle size', enter: 'Enter the bottle size in ml.' },
+  ];
+
+  // Every text below is 20 to Number(), and 20 is a valid value in every
+  // field (20 L, 20 °C, 20 volumes, a 20 ml bottle). So only the decimal
+  // text check can stop them.
+  const HEX = ['0x14', '0X14'];
+  const BINARY = ['0b10100', '0B10100'];
+  const OCTAL = ['0o24', '0O24'];
+
+  function assertNotANumberInEveryField(texts) {
+    for (const { field, name } of NUMBER_FIELDS) {
+      for (const text of texts) {
+        assertInputError(() => calc({ [field]: text }), field, `${name} must be a number.`);
+      }
+    }
+  }
+
+  test('rejects hex text as a number in every field', () => {
+    assertNotANumberInEveryField(HEX);
+  });
+
+  test('rejects binary text as a number in every field', () => {
+    assertNotANumberInEveryField(BINARY);
+  });
+
+  test('rejects octal text as a number in every field', () => {
+    assertNotANumberInEveryField(OCTAL);
+  });
+
+  test('rejects hex, binary and octal text with spaces around it', () => {
+    assertNotANumberInEveryField([' 0x14 ', '\t0b10100\n', '  0o24']);
+  });
+
+  test('the other exported functions also reject hex text', () => {
+    assertInputError(() => celsiusToFahrenheit('0x14'), 'tempC', 'Temperature must be a number.');
+    assertInputError(() => residualCO2('0x14'), 'tempC', 'Temperature must be a number.');
+    assertInputError(
+      () => batchSugarGrams({ litres: '0x14', tempC: 20, targetVols: 2.4 }),
+      'litres',
+      'Beer volume must be a number.',
+    );
+    assertInputError(() => gramsPerBottle('0x14', 0.33, 20), 'batchGrams', 'Batch sugar must be a number.');
+    assertInputError(() => gramsPerBottle(100, '0x1', 20), 'bottleLitres', 'Bottle size must be a number.');
+    assertInputError(() => gramsPerBottle(100, 0.33, '0x14'), 'batchLitres', 'Beer volume must be a number.');
+  });
+
+  test('still accepts plain decimal text with spaces, exponent, sign, leading or trailing point', () => {
+    const texts = [
+      [' 20 ', 20],
+      ['2e1', 20],
+      ['2E1', 20],
+      ['200e-1', 20],
+      ['+20', 20],
+      ['20.', 20],
+      ['020', 20],
+      ['.5', 0.5],
+    ];
+    for (const { field } of NUMBER_FIELDS) {
+      for (const [text, n] of texts) {
+        assert.deepEqual(calc({ [field]: text }), calc({ [field]: n }), `${field}: "${text}"`);
+      }
+    }
+  });
+
+  test('still gives the "Enter ..." message for empty or blank text in every field', () => {
+    for (const { field, enter } of NUMBER_FIELDS) {
+      for (const text of ['', '   ', '\t\n']) {
+        assertInputError(() => calc({ [field]: text }), field, enter);
+      }
+    }
+  });
+
+  test('still rejects a comma decimal ("20,5") as not a number in every field', () => {
+    assertNotANumberInEveryField(['20,5']);
+  });
+
+  test('still rejects Infinity, NaN and overflowing text as not a number in every field', () => {
+    assertNotANumberInEveryField(['Infinity', '-Infinity', 'NaN', '1e309']);
+  });
+
+  test('still rejects the numbers Infinity and NaN as not a number in every field', () => {
+    assertNotANumberInEveryField([Infinity, -Infinity, NaN]);
+  });
+
+  test('rejects text that is only part of a number (".", "+", "e5", "2e")', () => {
+    assertNotANumberInEveryField(['.', '+', 'e5', '2e', '2.0.1']);
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')

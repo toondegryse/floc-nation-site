@@ -13,14 +13,12 @@ None.
 
 ## In review
 
-None.
+- **T6a · Reject hex, binary and octal text in number fields** · builder · Fri 20 Nov
+  - Files: `docs/js/priming.js`, `tests/priming.test.js`
+  - Built: number text must be a plain decimal; 11 new module tests; the 4 failing calculator tests now pass (311 tests, 0 fail).
 
 ## To do
 
-- **T6a · Reject hex, binary and octal text in number fields** · builder · needs: none · from the T6 review, Fri 20 Nov
-  - Files: `docs/js/priming.js`, `tests/priming.test.js`
-  - Problem: `readNumber` uses `Number()`, so text like `0x14` is read as 20 and the page shows a confident figure for a typo.
-  - Done when: `0x14`, `0b10100` and `0o24` give "… must be a number." in every number field; " 20 ", "2e1", "+20", ".5" and "20." still work; a module test covers it; the 4 failing tests in `tests/calculator.test.js` pass. The tester suggested a fix (a plain-decimal check before `Number()`).
 - **T6 · Calculator test pass** · tester · needs: T6a · failed review once (Fri 20 Nov)
   - Done when: the module tests pass, edge cases are covered, and the numbers on the page match the module for the reference cases.
   - Findings: everything passes except hex/binary/octal input (4 tests in `tests/calculator.test.js`, 120 tests added). Rerun after T6a.
