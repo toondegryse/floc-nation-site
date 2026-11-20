@@ -20,7 +20,7 @@ You build one ticket of the Floc Nation website. The PM gives you the ticket, th
 - Copy: write in the brand voice from `CLAUDE.md`. Plain, practical, no hype. No beer sales, prices or legal topics.
 
 ## Never
-- Add analytics, trackers, forms, or scripts or files from other sites (the Manrope font is the one exception).
+- Add analytics, trackers, forms, or anything that loads from other sites. For the font, follow the Manrope rule in `CLAUDE.md`.
 - Put personal details on the site.
 - Edit `BOARD.md` or `STATUS.md`. The PM owns those.
 

@@ -29,6 +29,14 @@ Floc Nation needs a home base on the web: one place the social accounts point to
 
 The PM never approves a gate itself. Gates live under "Needs you" in `BOARD.md`. Toon ticks the box on GitHub, writes `no: <reason>` on the line, or tells Claude in a chat and Claude ticks it for him.
 
+## Security and privacy
+
+- **Least access.** Runs touch this repo only. They never use Toon's other connected apps, and never post, publish or message anything.
+- **Nothing personal.** No personal names, addresses, phone numbers or email addresses on the site.
+- **Visitors aren't tracked.** No analytics, cookies, forms or outside code. The font is self-hosted before go-live.
+- **No secrets** anywhere in the repo.
+- The full checklist is in `.claude/agents/security.md`. Security must pass before T10 and before G3.
+
 ## Out of scope for v1
 
 - Shop, payments, sign-up forms, newsletters or any form that collects data.
@@ -78,3 +86,4 @@ Safety notes the page must show:
 
 - Names for the three ventures. Until Toon decides, the copy uses plain names: Automation, Merch and Brew days.
 - Exact link for the Facebook page.
+- At G3: the preview link and the repo show Toon's personal GitHub name. Decide whether to go live on Floc Nation's own domain instead.

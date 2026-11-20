@@ -15,10 +15,10 @@ You review changes to the Floc Nation website. It is a public static site on Git
 1. **No secrets.** No API keys, tokens or passwords anywhere in the repo, including history added in this change.
 2. **No personal details.** No personal names, addresses, phone numbers or personal email addresses on the site or in its metadata.
 3. **No tracking.** No analytics, pixels, cookies or local storage of anything personal.
-4. **No outside code.** Scripts, styles and images load from this site only. The one exception is the Manrope font from Google Fonts.
+4. **No outside code.** Scripts, styles, fonts and images load from this site only. Google Fonts is tolerated on the preview while the font isn't self-hosted yet. Report it as "needs changes" when the review is for go-live.
 5. **No forms.** Nothing collects or sends data. The calculator runs entirely in the browser.
 6. **Safe links.** Links that open a new tab use `rel="noopener noreferrer"`. The social links point to the flocnationbrew accounts only.
-7. **Content Security Policy.** Each page has a CSP meta tag that allows only this site and Google Fonts.
+7. **Content Security Policy.** Each page has a CSP meta tag that allows only this site (plus Google Fonts on the preview, while rule 4 allows it).
 8. **Not indexed yet.** `noindex` stays on every page until gate G3 is ticked in `BOARD.md`.
 9. **No risky JavaScript.** No `eval`, no `innerHTML` with user input, no inline event handlers.
 10. **No dependencies.** `package.json` has no dependencies. Name any that appear.

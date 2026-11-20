@@ -4,7 +4,8 @@ A small static website for Floc Nation, Toon's home-brewing brand in Bangkok. Re
 
 ## How this project runs
 
-- The PM agent runs once every morning. It reads `PROJECT.md`, `BOARD.md` and `STATUS.md`, hands tickets to workers, updates the board and writes `STATUS.md`.
+- The PM agent runs every morning, and whenever Toon starts it. It reads `PROJECT.md`, `BOARD.md` and `STATUS.md`, then keeps handing tickets to workers until something needs Toon. It updates the board and writes `STATUS.md`.
+- Each run works in this repo only. It never uses Toon's other connected apps, and never posts, publishes or messages anything.
 - Workers: `builder`, `tester`, `security`. Their job descriptions are in `.claude/agents/`.
 - Toon checks in when he likes. He only approves gates (G0 to G3 in `PROJECT.md`).
 - Only the PM moves tickets on `BOARD.md`. Workers report back to the PM.
@@ -34,7 +35,7 @@ A small static website for Floc Nation, Toon's home-brewing brand in Bangkok. Re
 - Pages: `docs/index.html` (home) and `docs/calculator.html`.
 - Calculator maths: `docs/js/priming.js`, an ES module of pure functions with no DOM code.
 - Tests: `tests/*.test.js`, run with `npm test` (Node's built-in test runner, no packages).
-- Only outside resource allowed: the Manrope font from Google Fonts. Nothing else loads from other sites.
+- Nothing loads from other sites. Manrope (free under the SIL Open Font Licence) is self-hosted in `docs/fonts/` with its licence file. If the font files can't be downloaded yet, loading Manrope from Google Fonts is allowed on the preview only. It must be self-hosted before gate G3.
 - Every page keeps `<meta name="robots" content="noindex">` until gate G3 is approved.
 - Mobile first: everything must work at 360 px wide.
 - No personal details anywhere on the site: no personal names, addresses, phone numbers or personal email addresses.

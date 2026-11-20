@@ -17,8 +17,8 @@ None.
 ## To do
 
 - **T1 · Site skeleton and brand styles** · builder · needs: none
-  - Files: `docs/index.html`, `docs/css/site.css`
-  - Done when: header with the logo lockup, footer with the tagline and social links, brand colours and Manrope in place, `noindex` meta present, works at 360 px.
+  - Files: `docs/index.html`, `docs/css/site.css`, `docs/fonts/`
+  - Done when: header with the logo lockup, footer with the tagline and social links, brand colours in place, Manrope self-hosted with its licence (or the Google Fonts fallback in `CLAUDE.md`, flagged in the report), `noindex` meta present, works at 360 px.
 - **T2 · Priming maths and tests** · builder · needs: none
   - Files: `docs/js/priming.js`, `tests/priming.test.js`
   - Done when: pure functions for residual CO2, batch grams and grams per bottle (dextrose and table sugar), the three reference cases in `PROJECT.md` pass, and invalid input throws a clear error.
