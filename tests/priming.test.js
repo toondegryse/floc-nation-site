@@ -664,10 +664,10 @@ describe('plain decimal text only (T6a review)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Added by the tester in the T6a second review.
+// Added by the tester in the T6a second review (parallel PM run).
 // ---------------------------------------------------------------------------
 
-describe('plain decimal text only (T6a second review)', () => {
+describe('plain decimal text only (T6a second review, signed and hostile text)', () => {
   const FIELDS = [
     { field: 'litres', notANumber: 'Beer volume must be a number.', notPositive: 'Beer volume must be more than 0 litres.' },
     { field: 'tempC', notANumber: 'Temperature must be a number.' },
@@ -751,6 +751,108 @@ describe('plain decimal text only (T6a second review)', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Added by the tester in the T6a second review (linear-time decimal check).
+// ---------------------------------------------------------------------------
+
+describe('plain decimal text only (T6a second review, linear-time check)', () => {
+  const FIELDS = [
+    { field: 'litres', notANumber: 'Beer volume must be a number.' },
+    { field: 'tempC', notANumber: 'Temperature must be a number.' },
+    { field: 'targetVols', notANumber: 'Target CO2 must be a number.' },
+    { field: 'bottleMl', notANumber: 'Bottle size must be a number.' },
+  ];
+
+  /** Rejects the text as not a number in the field, and returns how long it took in ms. */
+  function timeRejection(field, notANumber, text) {
+    const start = performance.now();
+    assertInputError(() => calc({ [field]: text }), field, notANumber);
+    return performance.now() - start;
+  }
+
+  // Each shape below took quadratic time with the first T6a regex
+  // (about 0.1 to 0.5 s at 20,000 characters). A linear check takes well
+  // under 1 ms at 50,000.
+  const ones = (n) => '1'.repeat(n);
+  const LONG_SHAPES = [
+    { name: 'a decimal point in the middle', text: `${ones(25_000)}.${ones(25_000)}x` },
+    { name: 'a bare exponent mark ("e")', text: `${ones(50_000)}ex` },
+    { name: 'a signed exponent ("e+") and a long exponent', text: `${ones(25_000)}e+${ones(25_000)}x` },
+  ];
+  for (const { name, text } of LONG_SHAPES) {
+    test(`rejects a very long non-number with ${name} quickly (50,000 characters in under 250 ms)`, () => {
+      const ms = timeRejection('litres', 'Beer volume must be a number.', text);
+      assert.ok(ms < 250, `took ${ms.toFixed(0)} ms to reject ${text.length} characters`);
+    });
+  }
+
+  test('rejects a very long non-number quickly in temperature, target CO2 and bottle size too', () => {
+    const text = `${ones(50_000)}x`;
+    for (const { field, notANumber } of FIELDS.filter((f) => f.field !== 'litres')) {
+      const ms = timeRejection(field, notANumber, text);
+      assert.ok(ms < 250, `${field}: took ${ms.toFixed(0)} ms to reject ${text.length} characters`);
+    }
+  });
+
+  test('still accepts a very long plain decimal (a point then 50,000 zeros then 5) as a number', () => {
+    // Underflows to 0, which is a valid temperature, so the result must match 0 °C.
+    const text = `0.${'0'.repeat(50_000)}5`;
+    assert.deepEqual(calc({ tempC: text }), calc({ tempC: 0 }));
+  });
+
+  test('reads every short text over "01.eE+-x " as a number exactly when it is plain decimal text', () => {
+    // Independent of the module's regex: a hand-written check of the plain
+    // decimal shape (optional sign, digits with an optional point, at least
+    // one digit, optional exponent with at least one digit).
+    const isDigit = (ch) => ch !== undefined && ch >= '0' && ch <= '9';
+    function isPlainDecimal(s) {
+      let i = 0;
+      if (s[i] === '+' || s[i] === '-') i += 1;
+      let mantissaDigits = 0;
+      while (isDigit(s[i])) { i += 1; mantissaDigits += 1; }
+      if (s[i] === '.') {
+        i += 1;
+        while (isDigit(s[i])) { i += 1; mantissaDigits += 1; }
+      }
+      if (mantissaDigits === 0) return false;
+      if (s[i] === 'e' || s[i] === 'E') {
+        i += 1;
+        if (s[i] === '+' || s[i] === '-') i += 1;
+        const expStart = i;
+        while (isDigit(s[i])) i += 1;
+        if (i === expStart) return false;
+      }
+      return i === s.length;
+    }
+
+    const ALPHABET = ['0', '1', '.', 'e', 'E', '+', '-', 'x', ' '];
+    let texts = [''];
+    let layer = [''];
+    for (let len = 1; len <= 5; len += 1) {
+      layer = layer.flatMap((prefix) => ALPHABET.map((ch) => prefix + ch));
+      texts = texts.concat(layer);
+    }
+
+    const wrong = [];
+    for (const text of texts) {
+      const t = text.trim();
+      const expectNotANumber = t !== '' && !(isPlainDecimal(t) && Number.isFinite(Number(t)));
+      let gotNotANumber = false;
+      try {
+        calc({ litres: text });
+      } catch (err) {
+        gotNotANumber = err.message === 'Beer volume must be a number.';
+      }
+      if (gotNotANumber !== expectNotANumber && wrong.length < 10) {
+        wrong.push(`${JSON.stringify(text)}: ${gotNotANumber ? 'rejected' : 'read as a number'}`);
+      }
+    }
+    assert.equal(texts.length, 66_430);
+    assert.deepEqual(wrong, []);
+  });
+});
+
 
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.

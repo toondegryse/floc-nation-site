@@ -1,14 +1,14 @@
 # Floc Nation website
 
-A small static website for Floc Nation, Toon's home-brewing brand in Bangkok. Read `PROJECT.md` for the outcomes and `BOARD.md` for the current work.
+A small static website for Floc Nation, Toon's home-brewing brand in Bangkok. Read `PROJECT.md` for the outcomes. The current work lives on the Trello board "Floc Nation website": https://trello.com/b/bFug8tRw/floc-nation-website
 
 ## How this project runs
 
-- The PM agent runs every morning, and whenever Toon starts it. It reads `PROJECT.md`, `BOARD.md` and `STATUS.md`, then keeps handing tickets to workers until something needs Toon. It updates the board and writes `STATUS.md`.
-- Each run works in this repo only. It never uses Toon's other connected apps, and never posts, publishes or messages anything.
+- The PM agent runs every morning, and whenever Toon starts it. It reads `PROJECT.md`, `STATUS.md` and the Trello board, then keeps handing tickets to workers until something needs Toon. It updates the board and writes `STATUS.md`.
+- Each run works in this repo and on the "Floc Nation website" Trello board only. It uses the Trello connector for that board and nothing else: no other boards and none of Toon's other connected apps. It never posts, publishes or messages anything outside these two.
 - Workers: `builder`, `tester`, `security`. Their job descriptions are in `.claude/agents/`.
-- Toon checks in when he likes. He only approves gates (G0 to G3 in `PROJECT.md`).
-- Only the PM moves tickets on `BOARD.md`. Workers report back to the PM.
+- Toon checks in when he likes. He only approves gates (G0 to G3 in `PROJECT.md`), on their cards in the board's "Needs you" list.
+- Only the PM moves ticket cards on the Trello board. Workers never touch Trello; they report back to the PM.
 
 ## Brand
 

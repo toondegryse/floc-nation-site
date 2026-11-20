@@ -570,6 +570,80 @@ describe('edge cases in typed text', () => {
   });
 });
 
+// Added by the tester in the T6a second review.
+describe('typed text in every text field (T6a second review)', () => {
+  const FIELDS = [
+    {
+      field: 'litres', extra: {}, number: MSG.litresNumber, enter: MSG.litresEnter,
+      upper: ['0X14', '0B10100', '0O24'], plus: ['+20', '20'], leading: ['.5', '0.5'], trailing: ['20.', '20'], comma: '20,5',
+    },
+    {
+      field: 'tempC', extra: {}, number: MSG.tempNumber, enter: MSG.tempEnter,
+      upper: ['0X14', '0B10100', '0O24'], plus: ['+20', '20'], leading: ['.5', '0.5'], trailing: ['20.', '20'], comma: '20,5',
+    },
+    {
+      field: 'targetVols', extra: {}, number: MSG.targetNumber, enter: MSG.targetEnter,
+      upper: ['0X2', '0B10', '0O2'], plus: ['+2.4', '2.4'], leading: ['.5', '0.5'], trailing: ['3.', '3'], comma: '2,4',
+    },
+    {
+      field: 'customBottleMl', extra: { bottleSize: CUSTOM_BOTTLE }, number: MSG.bottleNumber, enter: MSG.bottleEnter,
+      upper: ['0X14A', '0B101001010', '0O512'], plus: ['+330', '330'], leading: ['.5', '0.5'], trailing: ['330.', '330'], comma: '330,5',
+    },
+  ];
+
+  for (const { field, extra, number, upper } of FIELDS) {
+    test(`${field}: upper-case hex, binary and octal text (${upper.join(', ')}) gives "${number}"`, () => {
+      for (const text of upper) {
+        const v = view({ ...extra, [field]: text });
+        assert.deepEqual(v.errors, { [field]: number }, `"${text}" was read as ${Number(text)}`);
+        assertNoResult(v);
+      }
+    });
+  }
+
+  const ACCEPTED = [
+    { key: 'plus', what: 'a leading plus sign' },
+    { key: 'leading', what: 'a leading point' },
+    { key: 'trailing', what: 'a trailing point' },
+  ];
+  for (const { key, what } of ACCEPTED) {
+    test(`${what} shows the same as the plain number in every text field`, () => {
+      for (const f of FIELDS) {
+        const [text, plain] = f[key];
+        const v = view({ ...f.extra, [f.field]: text });
+        assert.equal(v.hasResult, true, `${f.field} "${text}": ${JSON.stringify(v.errors)}`);
+        assert.deepEqual(v, view({ ...f.extra, [f.field]: plain }), `${f.field} "${text}" vs "${plain}"`);
+      }
+    });
+  }
+
+  test('blank text (spaces, a tab, a newline) gives the "Enter" message in every text field', () => {
+    for (const { field, extra, enter } of FIELDS) {
+      for (const text of ['   ', '\t', ' \n ']) {
+        assertFieldError(view({ ...extra, [field]: text }), field, enter);
+      }
+    }
+  });
+
+  test('a comma decimal gives "must be a number" in every text field', () => {
+    for (const { field, extra, number, comma } of FIELDS) {
+      assertFieldError(view({ ...extra, [field]: comma }), field, number);
+    }
+  });
+
+  for (const { field, extra, number } of FIELDS) {
+    test(`${field}: a very long non-number (50,000 digits then "x") gives "${number}" in under 250 ms`, () => {
+      const text = `${'1'.repeat(50_000)}x`;
+      const start = performance.now();
+      const v = view({ ...extra, [field]: text });
+      const ms = performance.now() - start;
+      assert.deepEqual(v.errors, { [field]: number });
+      assertNoResult(v);
+      assert.ok(ms < 250, `took ${ms.toFixed(0)} ms to reject ${text.length} characters`);
+    });
+  }
+});
+
 // ==========================================================================
 // Part 2: the DOM wiring, run against a stand-in DOM
 // ==========================================================================

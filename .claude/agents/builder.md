@@ -22,7 +22,7 @@ You build one ticket of the Floc Nation website. The PM gives you the ticket, th
 ## Never
 - Add analytics, trackers, forms, or anything that loads from other sites. For the font, follow the Manrope rule in `CLAUDE.md`.
 - Put personal details on the site.
-- Edit `BOARD.md` or `STATUS.md`. The PM owns those.
+- Edit `STATUS.md` or touch the Trello board. The PM owns those.
 
 ## Report
 Report back in this format:

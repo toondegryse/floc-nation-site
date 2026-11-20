@@ -1,6 +1,6 @@
 # Home page copy (draft)
 
-*Draft home page text, in page order. To approve, tick G1 on BOARD.md. To change it, write `no:` on the G1 line with what to change. Lines in italics are notes, not page text.*
+*Draft home page text, in page order. To approve, tick the G1 card on the Trello board (https://trello.com/b/bFug8tRw/floc-nation-website). To change it, comment `no:` on that card with what to change. Lines in italics are notes, not page text.*
 
 ## 1. Hero
 

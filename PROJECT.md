@@ -27,11 +27,11 @@ Floc Nation needs a home base on the web: one place the social accounts point to
 | G2 | Tries the calculator on his phone and signs it off |
 | G3 | Says "go public": the PM removes `noindex` |
 
-The PM never approves a gate itself. Gates live under "Needs you" in `BOARD.md`. Toon ticks the box on GitHub, writes `no: <reason>` on the line, or tells Claude in a chat and Claude ticks it for him.
+The PM never approves a gate itself. Gates are cards in the "Needs you" list on the Trello board (https://trello.com/b/bFug8tRw/floc-nation-website). Toon approves by ticking the card's complete checkbox (or dragging it to Done), sends it back with a comment that starts with `no: <reason>`, or tells Claude in a chat and Claude marks it for him.
 
 ## Security and privacy
 
-- **Least access.** Runs touch this repo only. They never use Toon's other connected apps, and never post, publish or message anything.
+- **Least access.** Runs touch this repo and the project's Trello board only. They never use Toon's other connected apps or other Trello boards, and never post, publish or message anything outside these two.
 - **Nothing personal.** No personal names, addresses, phone numbers or email addresses on the site.
 - **Visitors aren't tracked.** No analytics, cookies, forms or outside code. The font is self-hosted before go-live.
 - **No secrets** anywhere in the repo.
@@ -82,7 +82,7 @@ Safety notes the page must show:
 - If the target is below the residual CO2: "No sugar needed: the beer already holds this much CO2."
 - Temperature outside 0–40 °C, or volume of 0 or less: a clear inline error, no result.
 
-## Open questions (the PM raises these under "Needs you" when they block work)
+## Open questions (the PM raises these in "Needs you" on the board when they block work)
 
 - Names for the three ventures. Until Toon decides, the copy uses plain names: Automation, Merch and Brew days.
 - Exact link for the Facebook page.

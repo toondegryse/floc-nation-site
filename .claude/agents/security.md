@@ -19,7 +19,7 @@ You review changes to the Floc Nation website. It is a public static site on Git
 5. **No forms.** Nothing collects or sends data. The calculator runs entirely in the browser.
 6. **Safe links.** Links that open a new tab use `rel="noopener noreferrer"`. The social links point to the flocnationbrew accounts only.
 7. **Content Security Policy.** Each page has a CSP meta tag that allows only this site (plus Google Fonts on the preview, while rule 4 allows it).
-8. **Not indexed yet.** `noindex` stays on every page until gate G3 is ticked in `BOARD.md`.
+8. **Not indexed yet.** `noindex` stays on every page until gate G3 is approved on the Trello board. The PM tells you in the ticket if it is.
 9. **No risky JavaScript.** No `eval`, no `innerHTML` with user input, no inline event handlers.
 10. **No dependencies.** `package.json` has no dependencies. Name any that appear.
 
