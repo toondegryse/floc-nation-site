@@ -7,19 +7,22 @@
 
 
 /* ==========================================================================
-   FONT · Manrope 500, 600, 800
+   FONTS · Manrope 500, 600, 800 (Latin) and Noto Sans Thai 500, 600, 800
    --------------------------------------------------------------------------
+   Manrope has no Thai letters, so Thai text falls through to Noto Sans Thai
+   (the next font in --font). Both are free under the SIL Open Font Licence.
    TEMPORARY: loaded from Google Fonts on the preview only, because the font
-   files could not be downloaded yet. Manrope MUST be self-hosted before
+   files could not be downloaded yet. Both fonts MUST be self-hosted before
    gate G3. To swap:
-     1. Put the Manrope .woff2 files and the licence (OFL.txt) in docs/fonts/.
+     1. Put the Manrope and Noto Sans Thai .woff2 files and their licences
+        (OFL.txt) in docs/fonts/.
      2. Delete the @import line below and un-comment the @font-face block.
         Check the file names match the files you added.
      3. In the Content-Security-Policy meta tag of every page, remove
         https://fonts.googleapis.com from style-src and
         https://fonts.gstatic.com from font-src.
    ========================================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;800&family=Noto+Sans+Thai:wght@500;600;800&display=swap");
 
 /* Self-hosted Manrope (use instead of the @import above):
 
@@ -44,6 +47,30 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Noto Sans Thai";
+  src: url("../fonts/NotoSansThai-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Noto Sans Thai";
+  src: url("../fonts/NotoSansThai-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face {
+  font-family: "Noto Sans Thai";
+  src: url("../fonts/NotoSansThai-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
+}
 */
 /* ======================== end of font block ============================= */
 
@@ -63,7 +90,7 @@
   --muted: #4F5B6B;      /* secondary text on white or pale; form control borders */
 
   /* Type */
-  --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: "Manrope", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --weight-body: 500;
   --weight-strong: 600;
   --weight-heading: 800;
@@ -151,6 +178,23 @@ h3 {
 
 h1 {
   font-size: clamp(1.75rem, 1.25rem + 2.5vw, 2.75rem);
+}
+
+/* Thai has marks above and below the line, so it needs more room, and
+   tight letter spacing makes the marks touch. */
+html:lang(th) body {
+  line-height: 1.75;
+}
+
+html:lang(th) h1,
+html:lang(th) h2,
+html:lang(th) h3 {
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+html:lang(th) .site-footer__tagline {
+  letter-spacing: 0;
 }
 
 /* Short hop-teal rule under the page headline. Decoration only. */
@@ -364,6 +408,18 @@ a:hover {
   color: var(--teal-deep);
   text-decoration: underline;
   text-decoration-thickness: 2px;
+}
+
+/* Language switch (ไทย / English): a small outlined button after the page
+   links, so it doesn't read as another page. */
+.site-nav__lang a {
+  padding-inline: var(--space-2);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+}
+
+.site-nav__lang a:hover {
+  border-color: var(--teal-deep);
 }
 
 /* Current page: deep-teal text with a hop-teal underline. */

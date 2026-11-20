@@ -7,7 +7,8 @@
  *
  * Bad input throws a PrimingInputError (a RangeError). Its message is
  * plain English and can be shown next to the field as is. Its `field`
- * names the input it is about, e.g. 'tempC'.
+ * names the input it is about, e.g. 'tempC', and its `code` says what is
+ * wrong (see ERROR_CODES), so a page in another language can word it.
  *
  * Number inputs accept a number or the raw string from a form field.
  * Pass the raw string (input.value) so an empty field gets an
@@ -48,16 +49,32 @@ export const STYLE_PRESETS = Object.freeze([
   stylePreset('custom', 'Custom', null, null, null),
 ]);
 
+/**
+ * What can be wrong with an input, as PrimingInputError.code:
+ *   empty         nothing typed
+ *   not-number    not a plain decimal number
+ *   not-positive  0 or less where more than 0 is needed
+ *   out-of-range  temperature outside TEMP_RANGE_C
+ *   too-big       bottle bigger than the whole batch
+ *   negative      batch sugar below 0 g
+ *   unknown       sugar type that isn't in SUGAR_FACTORS
+ */
+export const ERROR_CODES = Object.freeze([
+  'empty', 'not-number', 'not-positive', 'out-of-range', 'too-big', 'negative', 'unknown',
+]);
+
 /** Error for input the calculator can't use. */
 export class PrimingInputError extends RangeError {
   /**
    * @param {string} message Plain-English message, fine to show on the page.
    * @param {string} field   The input it is about, e.g. 'tempC'.
+   * @param {string} [code]  What is wrong, one of ERROR_CODES.
    */
-  constructor(message, field) {
+  constructor(message, field, code = 'unknown') {
     super(message);
     this.name = 'PrimingInputError';
     this.field = field;
+    this.code = code;
   }
 }
 
@@ -111,12 +128,12 @@ export function batchSugarGrams(inputs) {
 export function gramsPerBottle(batchGrams, bottleLitres, batchLitres) {
   const grams = readNumber(batchGrams, 'batchGrams');
   if (grams < 0) {
-    throw new PrimingInputError("Batch sugar can't be less than 0 g.", 'batchGrams');
+    throw new PrimingInputError("Batch sugar can't be less than 0 g.", 'batchGrams', 'negative');
   }
   const bottle = readPositive(bottleLitres, 'bottleLitres');
   const batch = readPositive(batchLitres, 'batchLitres');
   if (bottle > batch) {
-    throw new PrimingInputError(BOTTLE_TOO_BIG, 'bottleLitres');
+    throw new PrimingInputError(BOTTLE_TOO_BIG, 'bottleLitres', 'too-big');
   }
   return (grams * bottle) / batch;
 }
@@ -152,7 +169,7 @@ export function calculatePriming(inputs) {
   const target = readPositive(targetVols, 'targetVols');
   const bottleLitres = readPositive(bottleMl, 'bottleMl') / 1000;
   if (bottleLitres > batchLitres) {
-    throw new PrimingInputError(BOTTLE_TOO_BIG, 'bottleMl');
+    throw new PrimingInputError(BOTTLE_TOO_BIG, 'bottleMl', 'too-big');
   }
 
   const batchGrams = batchSugarGrams({ litres: batchLitres, tempC, targetVols: target, sugar });
@@ -199,11 +216,11 @@ function readNumber(value, field) {
   const isEmpty =
     value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
   if (isEmpty) {
-    throw new PrimingInputError(enter, field);
+    throw new PrimingInputError(enter, field, 'empty');
   }
   const n = toNumber(value);
   if (!Number.isFinite(n)) {
-    throw new PrimingInputError(`${name} must be a number.`, field);
+    throw new PrimingInputError(`${name} must be a number.`, field, 'not-number');
   }
   return n;
 }
@@ -225,7 +242,7 @@ function readPositive(value, field) {
   const n = readNumber(value, field);
   if (n <= 0) {
     const { name, unit } = INPUTS[field];
-    throw new PrimingInputError(`${name} must be more than 0 ${unit}.`, field);
+    throw new PrimingInputError(`${name} must be more than 0 ${unit}.`, field, 'not-positive');
   }
   return n;
 }
@@ -236,14 +253,21 @@ function readTempC(value) {
     throw new PrimingInputError(
       `Temperature must be between ${TEMP_RANGE_C.min} and ${TEMP_RANGE_C.max} °C.`,
       'tempC',
+      'out-of-range',
     );
   }
   return c;
 }
 
+// Same as the built-in hasOwn check, which needs iOS 15.4 or Chrome 93.
+// This also works on older phones.
+function hasOwn(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
 function readSugarFactor(sugar) {
-  if (typeof sugar !== 'string' || !Object.hasOwn(SUGAR_FACTORS, sugar)) {
-    throw new PrimingInputError('Sugar type must be dextrose or table sugar.', 'sugar');
+  if (typeof sugar !== 'string' || !hasOwn(SUGAR_FACTORS, sugar)) {
+    throw new PrimingInputError('Sugar type must be dextrose or table sugar.', 'sugar', 'unknown');
   }
   return SUGAR_FACTORS[sugar];
 }

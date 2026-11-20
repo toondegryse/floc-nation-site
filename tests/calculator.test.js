@@ -22,6 +22,7 @@ import { BOTTLE_SIZES_ML, STYLE_PRESETS, calculatePriming, residualCO2 } from '.
 
 const PROJECT_MD = readFileSync(new URL('../PROJECT.md', import.meta.url), 'utf8');
 const CALCULATOR_HTML = readFileSync(new URL('../docs/calculator.html', import.meta.url), 'utf8');
+const CALCULATOR_TH_HTML = readFileSync(new URL('../docs/th/calculator.html', import.meta.url), 'utf8');
 
 // ==========================================================================
 // Expected values, copied from PROJECT.md ("Calculator reference")
@@ -749,14 +750,16 @@ function buildDocument(html) {
     all.push(el);
     if (attrs.id) byId.set(attrs.id, el);
   }
+  // The <html> element, so the page can read its lang attribute.
+  doc.documentElement = all.find((el) => el.tagName === 'HTML') ?? null;
   return doc;
 }
 
 let pageCount = 0;
 
 /** Loads a fresh copy of calculator.js with a stand-in document, so initPage() runs. */
-async function openPage() {
-  const doc = buildDocument(CALCULATOR_HTML);
+async function openPage(html = CALCULATOR_HTML) {
+  const doc = buildDocument(html);
   globalThis.document = doc;
   try {
     pageCount += 1;
@@ -1037,5 +1040,93 @@ describe('style guide on the page (stand-in DOM, T12)', () => {
     page.type('temp-c', '45');
     page.pick('style', 'custom');
     assert.equal(page.el('style').getAttribute('aria-describedby'), 'style-hint style-guide');
+  });
+});
+
+
+// ==========================================================================
+// Thai page (stand-in DOM, T15): same wiring, Thai words, same numbers
+// ==========================================================================
+
+describe('Thai calculator page, th/calculator.html (stand-in DOM, T15)', () => {
+  const openThai = () => openPage(CALCULATOR_TH_HTML);
+  const THAI = /[\u0E00-\u0E7F]/;
+
+  test('opens on 330 ml and American ales and IPA at 2.4, with a Thai prompt', async () => {
+    const page = await openThai();
+    assert.equal(page.el('bottle-size').value, '330');
+    assert.equal(page.el('style').value, 'american-ale-ipa');
+    assert.equal(page.el('target-vols').value, '2.4');
+    assert.equal(page.text('result-prompt'), 'กรอกปริมาณเบียร์ และอุณหภูมิสูงสุด เพื่อดูว่าต้องใส่น้ำตาลเท่าไร');
+  });
+
+  test('the bottle and style menus are in Thai, with the same values as the English page', async () => {
+    const page = await openThai();
+    assert.deepEqual(page.el('bottle-size').children.map((o) => o.value), [...PAGE_BOTTLE_SIZES, 'custom']);
+    assert.deepEqual(
+      page.el('bottle-size').children.map((o) => o.textContent),
+      [...PAGE_BOTTLE_SIZES.map((ml) => `${ml} มล.`), 'กำหนดขนาดเอง'],
+    );
+    assert.deepEqual(page.el('style').children.map((o) => o.value), STYLE_PRESETS.map((p) => p.id));
+    for (const o of page.el('style').children) assert.match(o.textContent, THAI, o.value);
+  });
+
+  test('the safety notes are written in Thai', async () => {
+    const page = await openThai();
+    assert.equal(page.text('note-high-pressure'), 'ใช้ขวดที่ทนแรงดันสูง');
+    assert.equal(page.text('note-no-sugar'), 'ไม่ต้องใส่น้ำตาล เบียร์มี CO2 ถึงระดับนี้อยู่แล้ว');
+  });
+
+  for (const c of REFERENCE_CASES) {
+    test(`typing ${label(c)} shows the same figures as the English page, with Thai labels`, async () => {
+      const en = await openWithCase(c);
+      const th = await openPage(CALCULATOR_TH_HTML);
+      th.type('litres', String(c.litres));
+      th.type('temp-c', String(c.tempC));
+      th.type('target-vols', String(c.targetVols));
+      assert.ok(th.shown('result-values'));
+      assert.equal(th.text('batch-grams'), en.text('batch-grams'));
+      assert.equal(th.text('per-bottle-grams'), en.text('per-bottle-grams'));
+      assert.equal(th.text('batch-label'), 'เดกซ์โทรสสำหรับทั้งแบตช์');
+      assert.equal(th.text('per-bottle-label'), 'เดกซ์โทรสต่อขวด 330 มล.');
+      assert.match(th.text('result-residual'), /^เบียร์มี CO2 อยู่แล้วประมาณ \d\.\d\d วอลุ่ม$/);
+    });
+  }
+
+  test('table sugar gives the English figures and Thai labels', async () => {
+    const page = await openThai();
+    page.type('litres', '20');
+    page.type('temp-c', '20');
+    page.pickSugar('table');
+    const expected = calculatePriming({ litres: 20, tempC: 20, targetVols: 2.4, sugar: 'table' });
+    assert.equal(page.text('batch-grams'), expected.batchGrams.toFixed(1));
+    assert.equal(page.text('batch-label'), 'น้ำตาลทรายสำหรับทั้งแบตช์');
+  });
+
+  test('picking Wheat beer shows the Thai high-pressure note and a Thai style guide', async () => {
+    const page = await openThai();
+    page.type('litres', '20');
+    page.type('temp-c', '20');
+    page.pick('style', 'wheat');
+    assert.equal(page.el('target-vols').value, '3.5');
+    assert.ok(page.shown('note-high-pressure'));
+    assert.equal(page.text('style-guide-1-label'), 'ช่วงที่นิยม');
+    assert.match(page.text('style-guide-1-text'), /^3\.3 ถึง 4\.5 วอลุ่ม /);
+    assert.equal(page.text('target-vols-hint'), 'เบียร์ข้าวสาลี: ปกติ 3.3 ถึง 4.5 วอลุ่ม');
+  });
+
+  test('a temperature of 45 °C shows the Thai range error', async () => {
+    const page = await openThai();
+    page.type('litres', '20');
+    page.type('temp-c', '45');
+    assert.ok(page.shown('temp-c-error'));
+    assert.equal(page.text('temp-c-error'), 'อุณหภูมิต้องอยู่ระหว่าง 0 ถึง 40 °C');
+    assert.equal(page.text('result-prompt'), 'แก้ช่องที่ทำเครื่องหมายไว้ เพื่อดูผลลัพธ์');
+  });
+
+  test('the English page still opens in English', async () => {
+    const page = await openPage();
+    assert.equal(page.el('bottle-size').children[0].textContent, '330 ml');
+    assert.equal(page.text('note-high-pressure'), NOTES.highPressure);
   });
 });

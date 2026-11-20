@@ -159,10 +159,10 @@ describe('style guide for Custom (T12)', () => {
   });
 
   test('the figures in the Custom guide match STYLE_PRESETS and the high-pressure limit', () => {
-    // The Custom text gives figures by hand, so check they stay in step.
     const lowest = Math.min(...PRESETS.map((p) => p.min));
     const highest = Math.max(...PRESETS.map((p) => p.max));
-    const expected = new Set([vols(lowest), vols(highest), vols(HIGH_PRESSURE_VOLS)]);
+    const usualTop = Math.max(...PRESETS.filter((p) => p.max <= HIGH_PRESSURE_VOLS).map((p) => p.max));
+    const expected = new Set([vols(lowest), vols(usualTop), vols(highest), vols(HIGH_PRESSURE_VOLS)]);
     const figures = shownText('custom').match(/\d+\.\d+/g) ?? [];
     assert.ok(figures.length > 0, 'Custom guide gives figures');
     for (const f of figures) {
@@ -170,6 +170,35 @@ describe('style guide for Custom (T12)', () => {
     }
     assert.ok(figures.includes(vols(lowest)), `mentions the lowest preset min ${vols(lowest)}`);
     assert.ok(figures.includes(vols(highest)), `mentions the highest preset max ${vols(highest)}`);
+  });
+
+  test('Custom has a "Typical beers" line built from STYLE_PRESETS, second (T14)', () => {
+    const points = styleGuideView('custom').points;
+    assert.equal(points[1].label, 'Typical beers');
+    assert.notEqual(points[1].label, GUIDE_RANGE_LABEL, 'not called "Usual range"');
+    const usual = PRESETS.filter((p) => p.max <= HIGH_PRESSURE_VOLS);
+    const top = PRESETS.reduce((a, p) => (p.max > a.max ? p : a));
+    assert.equal(
+      points[1].text,
+      `Most styles sit between ${vols(Math.min(...usual.map((p) => p.min)))} and ` +
+        `${vols(Math.max(...usual.map((p) => p.max)))} volumes. ${top.name} goes up to ${vols(top.max)}.`,
+    );
+  });
+
+  test('no guide line holds a second colon after its label (T14)', () => {
+    for (const p of STYLE_PRESETS) {
+      for (const point of styleGuideView(p.id).points) {
+        assert.doesNotMatch(point.text, /:/, `${p.id}: ${point.label}: ${point.text}`);
+      }
+    }
+  });
+
+  test('the wheat beer low-or-high line matches its default near the low end (T14)', () => {
+    const wheat = PRESETS.find((p) => p.id === 'wheat');
+    const line = styleGuideView('wheat').points.find((p) => p.label === 'Low or high end').text;
+    assert.doesNotMatch(line, /^Start at the low end/);
+    assert.ok(wheat.default - wheat.min < wheat.max - wheat.default, 'default is nearer the low end');
+    assert.match(line, /near the low end/);
   });
 });
 

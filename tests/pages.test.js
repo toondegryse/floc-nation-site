@@ -13,7 +13,19 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(ROOT, 'docs');
 const CSS_PATH = join(DOCS, 'css', 'site.css');
 
-const pages = readdirSync(DOCS).filter((f) => f.endsWith('.html')).sort();
+// English pages sit in docs/, their Thai twins in docs/th/ (CLAUDE.md, Tech rules).
+const TH_DIR = join(DOCS, 'th');
+const pages = [
+  ...readdirSync(DOCS).filter((f) => f.endsWith('.html')),
+  ...(existsSync(TH_DIR) ? readdirSync(TH_DIR).filter((f) => f.endsWith('.html')).map((f) => `th/${f}`) : []),
+].sort();
+
+// What differs between the English and the Thai pages.
+const langOfPage = (page) => (page.startsWith('th/') ? 'th' : 'en');
+const PER_LANG = {
+  en: { up: '', homeLabel: 'Floc Nation, home', navLabel: 'Main', tagline: /Brewed and built in Bangkok/ },
+  th: { up: '../', homeLabel: 'Floc Nation หน้าแรก', navLabel: 'เมนูหลัก', tagline: /ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ/ },
+};
 const read = (p) => readFileSync(p, 'utf8');
 const css = read(CSS_PATH);
 const cssNoComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -193,11 +205,15 @@ test('docs/ contains at least the home page', () => {
 
 for (const page of pages) {
   const html = read(join(DOCS, page));
+  const lang = langOfPage(page);
+  const L = PER_LANG[lang];
+  const pageDir = dirname(page);
+  const baseName = page.replace(/^th\//, '');
 
   describe(`${page}: head`, () => {
-    test('html element declares lang="en"', () => {
+    test(`html element declares lang="${lang}"`, () => {
       const htmlTag = tags(html).find((t) => /^<html\b/i.test(t));
-      assert.equal(attr(htmlTag, 'lang'), 'en');
+      assert.equal(attr(htmlTag, 'lang'), lang);
     });
 
     test('declares UTF-8', () => {
@@ -234,7 +250,7 @@ for (const page of pages) {
     test('links the shared stylesheet css/site.css', () => {
       const sheet = tags(html).find((t) => /^<link\b/i.test(t) && attr(t, 'rel') === 'stylesheet');
       assert.ok(sheet, 'stylesheet link present');
-      assert.equal(attr(sheet, 'href'), 'css/site.css');
+      assert.equal(attr(sheet, 'href'), `${L.up}css/site.css`);
     });
 
     test('theme-color is a badge palette colour', () => {
@@ -329,7 +345,7 @@ for (const page of pages) {
         .map((t) => attr(t, 'src') ?? attr(t, 'href'))
         .filter((u) => u && !isExternal(u) && !u.startsWith('#') && !/^(mailto|tel):/i.test(u));
       for (const ref of refs) {
-        let p = join(DOCS, ref.split(/[?#]/)[0]);
+        let p = join(DOCS, pageDir, ref.split(/[?#]/)[0]);
         if (ref.endsWith('/') || ref === '.' || ref === './') p = join(p, 'index.html');
         assert.ok(existsSync(p), `${ref} -> ${p} is missing`);
       }
@@ -362,8 +378,8 @@ for (const page of pages) {
       assert.ok(['./', 'index.html', './index.html'].includes(attr(logoTag, 'href')), `href=${attr(logoTag, 'href')}`);
     });
 
-    test('logo has the accessible name "Floc Nation, home"', () => {
-      assert.equal(attr(logoTag, 'aria-label'), 'Floc Nation, home');
+    test(`logo has the accessible name "${L.homeLabel}"`, () => {
+      assert.equal(attr(logoTag, 'aria-label'), L.homeLabel);
     });
 
     test('the home link holds exactly one image and nothing else', () => {
@@ -372,8 +388,8 @@ for (const page of pages) {
       assert.equal(rest, '', `a.logo also holds: ${rest}`);
     });
 
-    test(`the home link image is the badge, ${BADGE_SRC}`, () => {
-      assert.equal(attr(badgeImg, 'src'), BADGE_SRC);
+    test(`the home link image is the badge, ${L.up}${BADGE_SRC}`, () => {
+      assert.equal(attr(badgeImg, 'src'), `${L.up}${BADGE_SRC}`);
     });
 
     test('the badge image has a non-empty alt', () => {
@@ -400,8 +416,8 @@ for (const page of pages) {
     const footer = section(html, 'footer') ?? '';
     const footerLinks = links(footer);
 
-    test('footer shows the tagline "Brewed and built in Bangkok"', () => {
-      assert.match(text(footer), /Brewed and built in Bangkok/);
+    test(`footer shows the tagline ${L.tagline}`, () => {
+      assert.match(text(footer), L.tagline);
     });
 
     test('footer links to the four flocnationbrew accounts, once each', () => {
@@ -481,8 +497,9 @@ for (const page of pages) {
   });
 
   describe(`${page}: header navigation`, () => {
-    const nav = html.match(/<nav\b[^>]*aria-label="Main"[^>]*>([\s\S]*?)<\/nav>/i)?.[1] ?? '';
-    const navLinks = links(nav);
+    const nav = html.match(new RegExp(`<nav\\b[^>]*aria-label="${L.navLabel}"[^>]*>([\\s\\S]*?)<\\/nav>`, 'i'))?.[1] ?? '';
+    // Page links only: the language switch (it has hreflang) is checked below.
+    const navLinks = links(nav).filter((l) => !attr(l.tag, 'hreflang'));
     const pageOf = (href) => (['./', '.', 'index.html', './index.html'].includes(href) ? 'index.html' : href);
 
     test('header nav links to the home page and the calculator', () => {
@@ -492,7 +509,87 @@ for (const page of pages) {
 
     test('header nav marks this page, and only this page, as current', () => {
       const current = navLinks.filter((l) => attr(l.tag, 'aria-current') === 'page').map((l) => pageOf(l.href));
-      assert.deepEqual(current, [page]);
+      assert.deepEqual(current, [baseName]);
+    });
+  });
+
+  describe(`${page}: language switch and twin (T15)`, () => {
+    const other = lang === 'en' ? 'th' : 'en';
+    // Where each language's version of this page lives, as a file in docs/.
+    const twinFile = { en: join(DOCS, baseName), th: join(TH_DIR, baseName) };
+    const resolveHref = (href) => {
+      let p = join(DOCS, pageDir, href.split(/[?#]/)[0]);
+      if (href.endsWith('/') || href === '.' || href === './') p = join(p, 'index.html');
+      return p;
+    };
+    const nav = html.match(new RegExp(`<nav\\b[^>]*aria-label="${L.navLabel}"[^>]*>([\\s\\S]*?)<\\/nav>`, 'i'))?.[1] ?? '';
+    const switches = links(nav).filter((l) => attr(l.tag, 'hreflang'));
+
+    test('the twin page in the other language exists', () => {
+      assert.ok(existsSync(twinFile[other]), `${twinFile[other]} is missing`);
+    });
+
+    test('the header has one language switch, to the twin, marked with hreflang and lang', () => {
+      assert.equal(switches.length, 1, 'one switch link');
+      const sw = switches[0];
+      assert.equal(attr(sw.tag, 'hreflang'), other);
+      assert.equal(attr(sw.tag, 'lang'), other, 'the switch text is in the other language');
+      assert.equal(resolveHref(sw.href), twinFile[other]);
+      assert.match(nav, /<li class="site-nav__lang"><a\b/, 'sits in li.site-nav__lang');
+    });
+
+    test('the switch reads "ไทย" on English pages and "English" on Thai pages', () => {
+      const label = nav.match(/<a\b[^>]*hreflang[^>]*>([^<]*)<\/a>/)?.[1];
+      assert.equal(label, lang === 'en' ? 'ไทย' : 'English');
+    });
+
+    test('the head lists both language versions with rel="alternate" hreflang links', () => {
+      const alts = tags(html).filter((t) => /^<link\b/i.test(t) && attr(t, 'rel') === 'alternate');
+      const byLang = Object.fromEntries(alts.map((t) => [attr(t, 'hreflang'), attr(t, 'href')]));
+      assert.deepEqual(Object.keys(byLang).sort(), ['en', 'th']);
+      assert.equal(resolveHref(byLang.en), twinFile.en);
+      assert.equal(resolveHref(byLang.th), twinFile.th);
+    });
+  });
+}
+
+// ==========================================================================
+// Thai pages: same page as the English twin, Thai words (T15)
+// ==========================================================================
+
+// A page's tags without the attributes that may differ between languages.
+const LANG_ATTRS = /\s(lang|href|src|content|aria-label|hreflang)="[^"]*"/g;
+const shape = (html) => tags(html).map((t) => t.replace(LANG_ATTRS, ''));
+
+// Text between tags inside <body>, one entry per run of text.
+const bodyTexts = (html) =>
+  (section(html, 'body') ?? '')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+    .split(/<[^>]*>/)
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+const THAI_CHAR = /[\u0E00-\u0E7F]/;
+// Words that stay as they are on a Thai page.
+const KEEP_AS_IS = new Set(['Floc Nation', 'English', 'Instagram', 'YouTube', 'TikTok', 'Facebook', ':', '°C']);
+
+for (const page of pages.filter((p) => p.startsWith('th/'))) {
+  const html = read(join(DOCS, page));
+  const twin = page.replace(/^th\//, '');
+
+  describe(`${page}: matches ${twin} (T15)`, () => {
+    test(`has the same elements, ids, classes and ARIA wiring as ${twin}`, () => {
+      assert.deepEqual(shape(html), shape(read(join(DOCS, twin))));
+    });
+
+    test('every piece of visible text is Thai, apart from names that stay as they are', () => {
+      const left = bodyTexts(html).filter((s) => !THAI_CHAR.test(s) && !KEEP_AS_IS.has(s) && /[a-z]/i.test(s));
+      assert.deepEqual(left, []);
+    });
+
+    test('title and description are in Thai', () => {
+      assert.match(section(html, 'title') ?? '', THAI_CHAR);
+      assert.match(attr(metaByName(html, 'description')[0] ?? '', 'content') ?? '', THAI_CHAR);
     });
   });
 }
@@ -507,6 +604,13 @@ describe('calculator.html: page wiring', { skip: !pages.includes('calculator.htm
   test('loads js/calculator.js as an ES module', () => {
     const s = tags(html).find((t) => /^<script\b/i.test(t) && attr(t, 'src') === 'js/calculator.js');
     assert.ok(s, 'script tag for js/calculator.js');
+    assert.equal(attr(s, 'type'), 'module');
+  });
+
+  test('th/calculator.html loads the same script, ../js/calculator.js, as an ES module', () => {
+    const th = read(join(TH_DIR, 'calculator.html'));
+    const s = tags(th).find((t) => /^<script\b/i.test(t) && attr(t, 'src') === '../js/calculator.js');
+    assert.ok(s, 'script tag for ../js/calculator.js');
     assert.equal(attr(s, 'type'), 'module');
   });
 

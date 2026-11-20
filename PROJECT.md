@@ -48,7 +48,6 @@ The PM never approves a gate itself. Gates are cards in the "Needs you" list on 
 
 - Shop, payments, sign-up forms, newsletters or any form that collects data.
 - Analytics or tracking of any kind.
-- A Thai-language version (maybe later).
 - Our own domain name (decided after G3).
 
 ## Calculator reference

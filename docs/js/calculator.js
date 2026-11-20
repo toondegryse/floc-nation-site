@@ -6,9 +6,13 @@
  *      and returns exactly what the page shows. Node can import it for tests.
  *   2. initPage(document): the DOM code. It runs only in a browser.
  *
- * The maths and the input checks live in priming.js, and the style guide
- * text in styles.js. This file reads the fields, rounds the numbers for
- * display and decides what to show.
+ * The maths and the input checks live in priming.js, the style guide
+ * text in styles.js, and the words this file writes in i18n.js. This file
+ * reads the fields, rounds the numbers for display and decides what to show.
+ *
+ * Languages: the page's <html lang> picks English or Thai. computeView()
+ * takes the language as options.lang ('en' when left out). The numbers are
+ * the same in both languages; only the words change.
  */
 
 import {
@@ -17,9 +21,11 @@ import {
   STYLE_PRESETS,
   BOTTLE_SIZES_ML,
   DEFAULT_BOTTLE_ML,
+  HIGH_PRESSURE_VOLS,
   TEMP_RANGE_C,
 } from './priming.js';
 import { guideForStyle } from './styles.js';
+import { fill, langOf, textFor } from './i18n.js';
 
 // ---------------------------------------------------------------------------
 // Page constants
@@ -31,11 +37,8 @@ export const CUSTOM_BOTTLE = 'custom';
 /** Beer style picked when the page opens. */
 export const DEFAULT_STYLE_ID = 'american-ale-ipa';
 
-/** Safety notes, worded exactly as in PROJECT.md. */
-export const NOTES = Object.freeze({
-  highPressure: 'Use bottles rated for high pressure.',
-  noSugarNeeded: 'No sugar needed: the beer already holds this much CO2.',
-});
+/** Safety notes in English, worded exactly as in PROJECT.md. */
+export const NOTES = textFor('en').notes;
 
 /**
  * What the fields hold when the page opens. computeView() also uses these
@@ -51,25 +54,11 @@ export const DEFAULT_VALUES = Object.freeze({
   sugar: 'dextrose',
 });
 
-/** Display names for the sugar types (same keys as SUGAR_FACTORS). */
-const SUGAR_NAMES = Object.freeze({ dextrose: 'Dextrose', table: 'Table sugar' });
-
 /** Fields the brewer types into, in page order. */
 const TEXT_FIELDS = Object.freeze(['litres', 'customBottleMl', 'targetVols', 'tempC']);
 
-/** How the results area names an empty text field. */
-const FIELD_NAMES = Object.freeze({
-  litres: 'beer volume',
-  customBottleMl: 'bottle size',
-  targetVols: 'target CO2',
-  tempC: 'highest temperature',
-});
-
 /** Fields that can carry an error message on the page. */
 const ERROR_FIELDS = Object.freeze(['litres', 'bottleSize', 'customBottleMl', 'targetVols', 'tempC', 'sugar']);
-
-const PROMPT_FIX = 'Fix the marked fields to see the result.';
-const CUSTOM_TARGET_HINT = 'Type the CO2 level you want, in volumes.';
 
 /**
  * Stand-in values used while checking the other fields, so each bad field
@@ -97,8 +86,11 @@ export function targetForStyle(styleId) {
   return preset && preset.default !== null ? formatVols(preset.default) : null;
 }
 
-/** Label of the guide's first line for a style with a range. */
-export const GUIDE_RANGE_LABEL = 'Usual range';
+/** Label of the guide's first line for a style with a range (English). */
+export const GUIDE_RANGE_LABEL = textFor('en').guideRangeLabel;
+
+/** Label of the line Custom gets with the usual figures (English). */
+export const GUIDE_TYPICAL_LABEL = textFor('en').typicalLabel;
 
 /**
  * The lines of the style guide shown under the style menu.
@@ -106,21 +98,55 @@ export const GUIDE_RANGE_LABEL = 'Usual range';
  * A style with a range leads with "Usual range: <min> to <max> volumes.",
  * built from STYLE_PRESETS, followed on the same line by how it should feel
  * in the glass (styles.js). Its other lines follow. Custom has no range, so
- * it shows its own lines only.
+ * it shows its own lines, with a "Typical beers" line after the first one.
+ * That line's figures come from STYLE_PRESETS too.
  *
  * @param {string} styleId An id from STYLE_PRESETS.
+ * @param {'en'|'th'} [lang='en'] Language of the page.
  * @returns {{ points: ReadonlyArray<{ label: string, text: string }> }|null}
  *   One { label, text } per line, shown as "label: text", or null for an
  *   unknown id.
  */
-export function styleGuideView(styleId) {
-  const guide = guideForStyle(styleId);
+export function styleGuideView(styleId, lang = 'en') {
+  const t = textFor(lang);
+  const guide = guideForStyle(styleId, lang);
   const preset = findStyle(styleId);
   if (!guide || !preset) return null;
-  const lines = hasRange(preset)
-    ? [{ label: GUIDE_RANGE_LABEL, text: [`${rangeText(preset)}.`, guide.feel].filter(Boolean).join(' ') }]
-    : [];
-  return { points: [...lines, ...guide.points] };
+  if (!hasRange(preset)) {
+    const [first, ...rest] = guide.points;
+    const typical = { label: t.typicalLabel, text: typicalText(lang) };
+    return { points: first ? [first, typical, ...rest] : [typical] };
+  }
+  const rangeLine = fill(t.guideRangeLine, { range: rangeText(preset, lang) });
+  return {
+    points: [{ label: t.guideRangeLabel, text: [rangeLine, guide.feel].filter(Boolean).join(' ') }, ...guide.points],
+  };
+}
+
+/**
+ * The words for an input error, in the page's language.
+ * @param {PrimingInputError} err From priming.js.
+ * @param {'en'|'th'} [lang='en']
+ * @returns {string} English: the module's own message. Thai: the Thai
+ *   message for the error's field and code.
+ */
+export function errorMessage(err, lang = 'en') {
+  if (lang !== 'th') return err.message;
+  const t = textFor('th');
+  const template = ownValue(t.errors, `${err.field}.${err.code}`) ?? t.errorFallback;
+  return fill(template, { min: TEMP_RANGE_C.min, max: TEMP_RANGE_C.max });
+}
+
+/**
+ * A style's name in the page's language.
+ * @param {string} styleId An id from STYLE_PRESETS.
+ * @param {'en'|'th'} [lang='en']
+ * @returns {string|null} null for an unknown id.
+ */
+export function styleName(styleId, lang = 'en') {
+  const preset = findStyle(styleId);
+  if (!preset) return null;
+  return (lang === 'th' ? ownValue(textFor('th').styleNames, preset.id) : null) ?? preset.name;
 }
 
 /**
@@ -136,6 +162,7 @@ export function styleGuideView(styleId) {
  * @param {string} [raw.tempC]          Highest temperature after fermentation, in °C.
  * @param {string} [raw.sugar]          'dextrose' or 'table'.
  * @param {object} [options]
+ * @param {'en'|'th'} [options.lang='en'] Language of the words in the result.
  * @param {Set<string>|string[]} [options.touched] Text fields the brewer has
  *   typed in or left. An empty field that is not touched yet gets no error
  *   message; the results area asks for it instead. Leave this out to get
@@ -166,6 +193,8 @@ export function styleGuideView(styleId) {
  *   result is what calculatePriming() returned, or null.
  */
 export function computeView(raw = {}, options = {}) {
+  const lang = options.lang === 'th' ? 'th' : 'en';
+  const t = textFor(lang);
   const values = { ...DEFAULT_VALUES, ...definedOnly(raw) };
   const isTouched = touchedCheck(options.touched);
   const showCustomBottle = values.bottleSize === CUSTOM_BOTTLE;
@@ -183,12 +212,12 @@ export function computeView(raw = {}, options = {}) {
   // messages for empty fields the brewer hasn't reached yet.
   const errors = {};
   const waiting = [];
-  for (const [field, message] of Object.entries(fieldErrors)) {
+  for (const [field, err] of Object.entries(fieldErrors)) {
     const key = field === 'bottleMl' ? (showCustomBottle ? 'customBottleMl' : 'bottleSize') : field;
     if (TEXT_FIELDS.includes(key) && isEmpty(values[key]) && !isTouched(key)) {
       waiting.push(key);
     } else {
-      errors[key] = message;
+      errors[key] = errorMessage(err, lang);
     }
   }
 
@@ -197,36 +226,34 @@ export function computeView(raw = {}, options = {}) {
     const missing = TEXT_FIELDS.filter((key) => waiting.includes(key));
     prompt =
       Object.keys(errors).length === 0 && missing.length > 0
-        ? `Fill in the ${joinList(missing.map((key) => FIELD_NAMES[key]))} to see how much sugar to add.`
-        : PROMPT_FIX;
+        ? fill(t.promptFill, { fields: joinList(missing.map((key) => t.fieldNames[key]), t) })
+        : t.promptFix;
   }
 
-  const sugarName = SUGAR_NAMES[values.sugar] ?? 'Sugar';
+  const sugarName = ownValue(t.sugarNames, values.sugar) ?? t.sugarFallback;
   const notes = [];
-  if (result?.highPressure) notes.push(NOTES.highPressure);
-  if (result?.noSugarNeeded) notes.push(NOTES.noSugarNeeded);
+  if (result?.highPressure) notes.push(t.notes.highPressure);
+  if (result?.noSugarNeeded) notes.push(t.notes.noSugarNeeded);
 
   return {
     hasResult: result !== null,
-    batchLabel: `${sugarName} for the whole batch`,
+    batchLabel: fill(t.batchLabel, { sugar: sugarName }),
     batchText: result ? fixed(result.batchGrams, 1) : '',
-    perBottleLabel: result ? `${sugarName} per ${String(Number(bottleMl))} ml bottle` : '',
+    perBottleLabel: result ? fill(t.perBottleLabel, { sugar: sugarName, ml: String(Number(bottleMl)) }) : '',
     perBottleText: result ? fixed(result.perBottleGrams, 2) : '',
-    residualText: result
-      ? `The beer already holds about ${fixed(result.residual, 2)} volumes of CO2.`
-      : '',
+    residualText: result ? fill(t.residual, { vols: fixed(result.residual, 2) }) : '',
     notes,
     errors,
     prompt,
-    targetHint: targetHint(values.style, values.targetVols, !('targetVols' in fieldErrors)),
-    styleGuide: styleGuideView(values.style),
+    targetHint: targetHint(values.style, values.targetVols, !('targetVols' in fieldErrors), lang),
+    styleGuide: styleGuideView(values.style, lang),
     showCustomBottle,
     result,
   };
 }
 
 /**
- * Runs calculatePriming() and collects one message per bad field. The module
+ * Runs calculatePriming() and collects one error per bad field. The module
  * stops at the first bad field, so each bad field is swapped for a stand-in
  * and the call is tried again.
  */
@@ -238,24 +265,41 @@ function runCalculator(inputs) {
       const result = calculatePriming(trial);
       return { result: Object.keys(fieldErrors).length === 0 ? result : null, fieldErrors };
     } catch (err) {
-      if (!(err instanceof PrimingInputError) || !Object.hasOwn(STAND_INS, err.field)) throw err;
+      if (!(err instanceof PrimingInputError) || !hasOwn(STAND_INS, err.field)) throw err;
       // A stand-in clashed with another field (a bottle bigger than a tiny
       // batch). The field already has its own message, so stop here.
-      if (Object.hasOwn(fieldErrors, err.field)) break;
-      fieldErrors[err.field] = err.message;
+      if (hasOwn(fieldErrors, err.field)) break;
+      fieldErrors[err.field] = err;
       trial[err.field] = STAND_INS[err.field];
     }
   }
   return { result: null, fieldErrors };
 }
 
-function targetHint(styleId, targetRaw, targetIsValid) {
+function targetHint(styleId, targetRaw, targetIsValid, lang) {
+  const t = textFor(lang);
   const preset = findStyle(styleId);
-  if (!preset || !hasRange(preset)) return CUSTOM_TARGET_HINT;
-  const range = `${preset.name}: usually ${rangeText(preset)}.`;
+  if (!preset || !hasRange(preset)) return t.customTargetHint;
+  const range = fill(t.targetHint, { style: styleName(preset.id, lang), range: rangeText(preset, lang) });
   const target = Number(targetRaw);
   const outside = targetIsValid && !isEmpty(targetRaw) && (target < preset.min || target > preset.max);
-  return outside ? `${range} Your target is outside this range.` : range;
+  return outside ? `${range} ${t.targetOutside}` : range;
+}
+
+/**
+ * Custom's "Typical beers" line: the range most styles sit in (those that
+ * stay at or under the high-pressure limit), and how high the highest goes.
+ */
+function typicalText(lang) {
+  const ranged = STYLE_PRESETS.filter(hasRange);
+  const usual = ranged.filter((p) => p.max <= HIGH_PRESSURE_VOLS);
+  const highest = ranged.reduce((top, p) => (p.max > top.max ? p : top));
+  return fill(textFor(lang).typicalText, {
+    min: formatVols(Math.min(...usual.map((p) => p.min))),
+    max: formatVols(Math.max(...usual.map((p) => p.max))),
+    high: styleName(highest.id, lang),
+    highMax: formatVols(highest.max),
+  });
 }
 
 function findStyle(styleId) {
@@ -267,8 +311,8 @@ function hasRange(preset) {
 }
 
 /** A preset's usual range, e.g. '3.3 to 4.5 volumes'. */
-function rangeText(preset) {
-  return `${formatVols(preset.min)} to ${formatVols(preset.max)} volumes`;
+function rangeText(preset, lang = 'en') {
+  return fill(textFor(lang).range, { min: formatVols(preset.min), max: formatVols(preset.max) });
 }
 
 function formatVols(vols) {
@@ -301,9 +345,19 @@ function touchedCheck(touched) {
   return (key) => Boolean(touched[key]);
 }
 
-function joinList(items) {
+function joinList(items, t) {
   if (items.length <= 1) return items.join('');
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+  return `${items.slice(0, -1).join(t.listSeparator)}${t.listLast}${items[items.length - 1]}`;
+}
+
+// The built-in hasOwn check needs iOS 15.4 or Chrome 93; this works on older phones too.
+function hasOwn(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+/** obj[key] if obj has key as its own property, otherwise undefined. */
+function ownValue(obj, key) {
+  return obj && typeof key === 'string' && hasOwn(obj, key) ? obj[key] : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -328,6 +382,8 @@ function initPage(doc) {
   const byId = (id) => doc.getElementById(id);
   const field = (key) => byId(FIELD_IDS[key]);
   if (!field('litres')) return; // not the calculator page
+  const lang = langOf(doc);
+  const t = textFor(lang);
 
   const sugarRadios = Array.from(doc.querySelectorAll('input[type="radio"][name="sugar"]'));
   const controlsFor = (key) => (key === 'sugar' ? sugarRadios : [field(key)]);
@@ -353,16 +409,16 @@ function initPage(doc) {
 
   // Lists come from priming.js, so the page and the maths always agree.
   const bottleSelect = field('bottleSize');
-  for (const ml of BOTTLE_SIZES_ML) addOption(bottleSelect, String(ml), `${ml} ml`);
-  addOption(bottleSelect, CUSTOM_BOTTLE, 'Custom size');
+  for (const ml of BOTTLE_SIZES_ML) addOption(bottleSelect, String(ml), fill(t.bottleOption, { ml }));
+  addOption(bottleSelect, CUSTOM_BOTTLE, t.customBottleOption);
   const styleSelect = field('style');
-  for (const preset of STYLE_PRESETS) addOption(styleSelect, preset.id, preset.name);
+  for (const preset of STYLE_PRESETS) addOption(styleSelect, preset.id, styleName(preset.id, lang));
 
   bottleSelect.value = DEFAULT_VALUES.bottleSize;
   styleSelect.value = DEFAULT_VALUES.style;
   field('targetVols').value = DEFAULT_VALUES.targetVols;
-  setText(out.noteHighPressure, NOTES.highPressure);
-  setText(out.noteNoSugar, NOTES.noSugarNeeded);
+  setText(out.noteHighPressure, t.notes.highPressure);
+  setText(out.noteNoSugar, t.notes.noSugarNeeded);
 
   // Hint ids from the HTML; the error id is added only while there is an error.
   const baseDescribedBy = new Map();
@@ -413,8 +469,8 @@ function initPage(doc) {
 
     setText(out.prompt, view.prompt);
     setHidden(out.prompt, view.prompt === '');
-    setHidden(out.noteHighPressure, !view.notes.includes(NOTES.highPressure));
-    setHidden(out.noteNoSugar, !view.notes.includes(NOTES.noSugarNeeded));
+    setHidden(out.noteHighPressure, !view.notes.includes(t.notes.highPressure));
+    setHidden(out.noteNoSugar, !view.notes.includes(t.notes.noSugarNeeded));
     setHidden(out.values, !view.hasResult);
     if (view.hasResult) {
       setText(out.batchLabel, view.batchLabel);
@@ -425,7 +481,7 @@ function initPage(doc) {
     }
   };
 
-  const render = () => paint(computeView(readValues(), { touched }));
+  const render = () => paint(computeView(readValues(), { touched, lang }));
 
   for (const key of TEXT_FIELDS) {
     const markAndRender = () => {

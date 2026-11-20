@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Google Fonts entries in style-src and font-src are for the preview only. Remove them once Manrope and Noto Sans Thai are self-hosted (before gate G3). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>คำนวณน้ำตาลไพรมิ่ง · Floc Nation</title>
+<meta name="description" content="คำนวณว่าต้องใส่น้ำตาลไพรมิ่งเท่าไรตอนบรรจุขวด ทั้งสำหรับทั้งแบตช์และต่อขวด">
+<meta name="theme-color" content="#FDFDFD">
+<link rel="alternate" hreflang="en" href="../calculator.html">
+<link rel="alternate" hreflang="th" href="calculator.html">
+<link rel="stylesheet" href="../css/site.css">
+<script type="module" src="../js/calculator.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a>
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="logo" href="./" aria-label="Floc Nation หน้าแรก">
+      <img src="../assets/floc-nation-badge.svg" alt="Floc Nation" width="173" height="123">
+    </a>
+    <nav class="site-nav" aria-label="เมนูหลัก">
+      <ul>
+        <li><a href="./">หน้าแรก</a></li>
+        <li><a href="calculator.html" aria-current="page">คำนวณน้ำตาลไพรมิ่ง</a></li>
+        <li class="site-nav__lang"><a href="../calculator.html" hreflang="en" lang="en">English</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="site-main">
+  <div class="container">
+    <h1>คำนวณน้ำตาลไพรมิ่ง</h1>
+    <p class="lead">ต้องใส่น้ำตาลเท่าไรตอนบรรจุขวด ทั้งแบตช์และต่อขวด</p>
+    <p>น้ำตาลน้อยไป เบียร์จะไม่ซ่า มากไป เบียร์จะพุ่งล้นตอนเปิด หรือขวดอาจระเบิด ปริมาณที่พอดีขึ้นอยู่กับว่ามีเบียร์เท่าไร อยากให้ซ่าแค่ไหน และหลังหมักเสร็จเบียร์เคยอุ่นขึ้นถึงกี่องศา</p>
+    <noscript><p class="note note--warning">เครื่องคำนวณนี้ต้องใช้ JavaScript เปิดใช้งานก่อนเพื่อดูผลลัพธ์</p></noscript>
+
+    <div class="grid">
+      <section class="card card--accent" aria-labelledby="beer-heading">
+        <h2 class="card__title" id="beer-heading">เบียร์ของคุณ</h2>
+
+        <div class="field">
+          <label for="litres">ปริมาณเบียร์<span class="visually-hidden"> เป็นลิตร</span></label>
+          <p class="hint" id="litres-hint">ปริมาณเบียร์ที่จะบรรจุขวด</p>
+          <div class="input-unit">
+            <input type="text" id="litres" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="litres-hint">
+            <span class="input-unit__unit" aria-hidden="true">ลิตร</span>
+          </div>
+          <p class="field-error" id="litres-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="bottle-size">ขนาดขวด</label>
+          <select id="bottle-size"></select>
+          <p class="field-error" id="bottle-size-error" hidden></p>
+        </div>
+
+        <div id="custom-bottle" hidden>
+          <div class="field">
+            <label for="custom-bottle-ml">ขนาดขวดที่กำหนดเอง<span class="visually-hidden"> เป็นมิลลิลิตร</span></label>
+            <div class="input-unit">
+              <input type="text" id="custom-bottle-ml" inputmode="decimal" autocomplete="off" spellcheck="false">
+              <span class="input-unit__unit" aria-hidden="true">มล.</span>
+            </div>
+            <p class="field-error" id="custom-bottle-ml-error" hidden></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="style">สไตล์เบียร์</label>
+          <p class="hint" id="style-hint">เลือกสไตล์แล้วจะได้ค่า CO2 เป้าหมายที่นิยมของสไตล์นั้น ยังแก้ค่าเป้าหมายเองได้</p>
+          <select id="style" aria-describedby="style-hint style-guide"></select>
+          <div class="note small" id="style-guide" hidden>
+            <p id="style-guide-1"><strong><span id="style-guide-1-label"></span>:</strong> <span id="style-guide-1-text"></span></p>
+            <p id="style-guide-2"><strong><span id="style-guide-2-label"></span>:</strong> <span id="style-guide-2-text"></span></p>
+            <p id="style-guide-3"><strong><span id="style-guide-3-label"></span>:</strong> <span id="style-guide-3-text"></span></p>
+            <p id="style-guide-4"><strong><span id="style-guide-4-label"></span>:</strong> <span id="style-guide-4-text"></span></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="target-vols">CO2 เป้าหมาย<span class="visually-hidden"> เป็นวอลุ่ม</span></label>
+          <p class="hint" id="target-vols-hint">พิมพ์ระดับ CO2 ที่ต้องการ เป็นวอลุ่ม</p>
+          <div class="input-unit">
+            <input type="text" id="target-vols" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="target-vols-hint">
+            <span class="input-unit__unit" aria-hidden="true">วอลุ่ม</span>
+          </div>
+          <p class="field-error" id="target-vols-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="temp-c">อุณหภูมิสูงสุดหลังหมักเสร็จ<span class="visually-hidden"> เป็น °C</span></label>
+          <p class="hint" id="temp-c-hint">อุณหภูมิที่เบียร์อุ่นที่สุดตั้งแต่หมักเสร็จ ค่านี้บอกว่าในเบียร์ยังเหลือ CO2 อยู่เท่าไร</p>
+          <div class="input-unit">
+            <input type="text" id="temp-c" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="temp-c-hint">
+            <span class="input-unit__unit" aria-hidden="true">°C</span>
+          </div>
+          <p class="field-error" id="temp-c-error" hidden></p>
+        </div>
+
+        <fieldset id="sugar">
+          <legend>น้ำตาล</legend>
+          <label class="choice"><input type="radio" name="sugar" value="dextrose" checked> เดกซ์โทรส (น้ำตาลข้าวโพด)</label>
+          <label class="choice"><input type="radio" name="sugar" value="table"> น้ำตาลทราย</label>
+          <p class="field-error" id="sugar-error" hidden></p>
+        </fieldset>
+      </section>
+
+      <section class="stack" aria-labelledby="result-heading">
+        <h2 class="card__title" id="result-heading">น้ำตาลที่ต้องใส่</h2>
+        <div id="result" aria-live="polite" aria-atomic="true">
+          <p class="note" id="result-prompt" hidden></p>
+          <p class="note note--warning" id="note-high-pressure" hidden></p>
+          <p class="note" id="note-no-sugar" hidden></p>
+          <div class="card card--dark" id="result-values" hidden>
+            <p class="result">
+              <span class="result__label" id="batch-label">เดกซ์โทรสสำหรับทั้งแบตช์</span>
+              <span class="result__value"><span id="batch-grams"></span><span class="result__unit" aria-hidden="true">กรัม</span><span class="visually-hidden"> กรัม</span></span>
+            </p>
+            <p class="result">
+              <span class="result__label" id="per-bottle-label">เดกซ์โทรสต่อขวด 330 มล.</span>
+              <span class="result__value"><span id="per-bottle-grams"></span><span class="result__unit" aria-hidden="true">กรัม</span><span class="visually-hidden"> กรัม</span></span>
+            </p>
+            <p class="small" id="result-residual"></p>
+          </div>
+        </div>
+        <p class="small muted">ถ้าผสมน้ำตาลลงในเบียร์ทั้งแบตช์ก่อนบรรจุ ให้ใช้ตัวเลขทั้งแบตช์ ถ้าใส่ทีละขวด ให้ใช้ตัวเลขต่อขวด</p>
+        <p class="small muted">หลังหมักเสร็จ เบียร์ยังมี CO2 เหลืออยู่บ้าง ยิ่งเบียร์เคยอุ่นมากก็ยิ่งเหลือน้อย เครื่องคำนวณจะหาว่าเหลือเท่าไร แล้วคิดน้ำตาลที่ต้องใส่ให้ถึงเป้าหมาย</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p class="site-footer__tagline">ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ</p>
+    <p class="site-footer__label" id="social-label">ติดตามเราในชื่อ flocnationbrew ได้ที่</p>
+    <nav aria-labelledby="social-label">
+      <ul class="social-links">
+        <li><a href="https://www.instagram.com/flocnationbrew/">Instagram</a></li>
+        <li><a href="https://www.youtube.com/@flocnationbrew">YouTube</a></li>
+        <li><a href="https://www.tiktok.com/@flocnationbrew">TikTok</a></li>
+        <li><a href="https://www.facebook.com/flocnationbrew">Facebook</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

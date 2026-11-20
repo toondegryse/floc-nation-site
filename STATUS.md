@@ -1,5 +1,23 @@
 # Status
 
+## Fri 20 Nov 2026 · Day 0 · evening, with Toon
+- **Done:**
+  - T15: the site is Thai and English. Every page has a ไทย / English switch to its twin in `docs/th/`, and the Thai calculator gives exactly the same numbers as the English one. English stays the default on the preview.
+  - T14 (merged into T15): style guide polish. Custom's "Typical beers" figures now come from the style table, the wheat beer tip matches its default, no guide line has two colons, and the calculator also works on phones older than iOS 15.4.
+  - `THAI.md` lists every Thai string next to its English one, for the native-speaker check.
+  - The morning run can use Trello now: a new scheduled task, "Floc site PM run (with Trello)", replaces the old one.
+  - Checked in the chat: 605 tests (601 pass, 0 fail, 4 todo), both languages in a browser at 360 and 320 px, and the security checklist (pass).
+- **Doing:** nothing, waiting on you.
+- **Needs you:**
+  - Switch off the old "Floc site PM run" scheduled task and keep "(with Trello)". Claude wasn't allowed to switch it off. Until it's off, both start at 06:46.
+  - G-TH: ask your native-speaker contact to read `THAI.md` and mark anything to change.
+  - Still open: upload the social kit, the T6 decision, G1 (read `COPY.md`).
+- **Try it:** https://toondegryse.github.io/floc-nation-site/th/calculator.html. Enter 20 L and 20 °C: it should say 123.1 g and 2.03 g, the same as the English page. Pick เบียร์ข้าวสาลี (wheat beer) to see the Thai guide and the high-pressure note. Tap "English" to switch back.
+- **Risks:**
+  - The Thai stays unchecked until the native speaker has read it. It goes live only after that (G-TH).
+  - Manrope and now Noto Sans Thai must be self-hosted before G3.
+  - The hreflang links are relative for now. At go-live (T10), make them full addresses on the final domain.
+
 ## Fri 20 Nov 2026 · Day 0 · afternoon, with Toon
 - **Done:**
   - G0: the preview link is live.
