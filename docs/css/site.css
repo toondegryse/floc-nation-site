@@ -52,13 +52,15 @@
    Brand tokens
    -------------------------------------------------------------------------- */
 :root {
-  /* Brand colours (CLAUDE.md). */
-  --navy: #13233A;          /* text and dark backgrounds */
-  --steel: #2F5D8A;         /* sub-brand names, links, rules */
-  --copper: #B8741F;        /* the bottle cap in the logo ONLY; do not use elsewhere */
-  --paper: #F3EEE5;         /* page background */
-  --paper-border: #D9D1C3;  /* borders and dividers (decorative only, too faint for control outlines) */
-  --muted: #4F5B6B;         /* secondary text, form control borders */
+  /* Badge palette (CLAUDE.md). Contrast ratios are against the colour named. */
+  --navy: #022C54;       /* text; header, footer and dark panels. 13.85:1 on white */
+  --teal: #06929E;       /* hop teal: accents, rules, icons. Text only 24 px+ on white (3.68:1) */
+  --teal-deep: #06727B;  /* links and small accent text on white (5.58:1), focus rings on light */
+  --sky: #2BACC7;        /* accents, links and focus rings on navy ONLY (5.25:1). Never text on white */
+  --white: #FDFDFD;      /* page background; text on navy */
+  --pale: #EEF4F8;       /* cards and panels on the white page */
+  --line: #D5DEE6;       /* borders and dividers, decoration only (too faint for control outlines) */
+  --muted: #4F5B6B;      /* secondary text on white or pale; form control borders */
 
   /* Type */
   --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -71,6 +73,11 @@
   --container-narrow: 40rem;
   --gutter: 1.25rem;
   --radius: 6px;
+
+  /* Badge in the header. Clear space is a quarter of its height on every
+     side (CLAUDE.md); the header padding and gap below are built from it. */
+  --badge-height: 4rem;
+  --badge-clear: calc(var(--badge-height) / 4);
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -104,7 +111,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--paper);
+  background: var(--white);
   color: var(--navy);
   font-family: var(--font);
   font-weight: var(--weight-body);
@@ -119,12 +126,12 @@ svg {
 }
 
 ::selection {
-  background: var(--steel);
-  color: var(--paper);
+  background: var(--teal-deep);
+  color: var(--white);
 }
 
 :focus-visible {
-  outline: 2px solid var(--steel);
+  outline: 2px solid var(--teal-deep);
   outline-offset: 2px;
 }
 
@@ -144,6 +151,17 @@ h3 {
 
 h1 {
   font-size: clamp(1.75rem, 1.25rem + 2.5vw, 2.75rem);
+}
+
+/* Short hop-teal rule under the page headline. Decoration only. */
+.site-main h1::after {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 4px;
+  margin-top: var(--space-4);
+  border-radius: 2px;
+  background: var(--teal);
 }
 
 h2 {
@@ -181,22 +199,22 @@ small,
   color: var(--muted);
 }
 
-/* Steel blue label for sub-brand names (e.g. the three ventures). */
+/* Deep-teal label for sub-brand names (e.g. the three ventures). */
 .sub-brand {
-  color: var(--steel);
+  color: var(--teal-deep);
   font-weight: var(--weight-strong);
 }
 
 hr {
   border: 0;
-  border-top: 1px solid var(--paper-border);
+  border-top: 1px solid var(--line);
   margin: var(--space-6) 0;
 }
 
-/* Thin steel-blue rule, as used in the logo. */
+/* Hop-teal accent rule. */
 .rule {
   border: 0;
-  border-top: 1px solid var(--steel);
+  border-top: 2px solid var(--teal);
   margin: var(--space-6) 0;
 }
 
@@ -205,7 +223,7 @@ hr {
    Links
    -------------------------------------------------------------------------- */
 a {
-  color: var(--steel);
+  color: var(--teal-deep);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
@@ -269,152 +287,131 @@ a:hover {
   z-index: 10;
   padding: var(--space-2) var(--space-4);
   background: var(--navy);
-  color: var(--paper);
+  color: var(--white);
   font-weight: var(--weight-strong);
   border-radius: var(--radius);
   transform: translateY(-200%);
+}
+
+.skip-link:hover {
+  color: var(--white);
 }
 
 .skip-link:focus {
   transform: none;
 }
 
-.skip-link:focus-visible {
-  outline-color: var(--steel);
-}
-
 
 /* --------------------------------------------------------------------------
-   Header and logo lockup
+   Header: the three-hops badge and the main navigation
    -------------------------------------------------------------------------- */
 .site-header {
-  border-bottom: 1px solid var(--paper-border);
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
 }
 
+/* The padding and the gap keep the badge's clear space (a quarter of its
+   height) on every side. On a narrow phone the two nav links stack on the
+   right of the badge; when there is room they sit in one row. */
 .site-header__inner {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  padding-block: var(--space-4);
+  gap: var(--badge-clear);
+  padding-block: var(--badge-clear);
 }
 
-/* Logo: "FL" + copper cap as the O + "C", then "NATION" between two thin
-   steel-blue lines. The NATION row stretches to the width of the wordmark. */
+/* The badge is used exactly as drawn: fixed height, width from its own
+   proportions (viewBox 173 x 123), never stretched, cropped or tinted. */
 .logo {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: stretch;
-  font-size: 2.25rem;          /* wordmark size; everything below scales from it */
-  line-height: 1;
-  color: var(--navy);
-  text-decoration: none;
-}
-
-.logo:hover {
-  color: var(--navy);
-}
-
-.logo__mark {
-  display: flex;
-  align-items: baseline;
-  gap: 0.04em;
-  font-weight: var(--weight-heading);
-  letter-spacing: 0.01em;
-}
-
-.logo__mark img {
   display: block;
-  width: 0.8em;
-  height: 0.8em;
-  margin-bottom: -0.037em;
+  flex: none;
+  line-height: 0;
+  border-radius: 2px;
 }
 
-.logo__nation {
-  display: flex;
-  align-items: center;
-  gap: 0.6em;
-  margin-top: 0.45em;
-  font-size: 0.28em;           /* relative to the wordmark */
-  font-weight: var(--weight-strong);
-  letter-spacing: 0.5em;
-  color: var(--navy);
+.logo img {
+  display: block;
+  width: auto;
+  height: var(--badge-height);
+  max-width: none;
 }
 
-.logo__nation::before,
-.logo__nation::after {
-  content: "";
-  flex: 1 1 0;
-  min-width: 1em;
-  height: 1px;
-  background: var(--steel);
+.site-nav {
+  min-width: 0;
 }
 
-/* Cancel the trailing letter-spacing so the word sits centred between lines. */
-.logo__nation > span {
-  margin-right: -0.5em;
-}
-
-/* Optional site navigation, for when there is more than one page. */
 .site-nav ul {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-5);
+  justify-content: flex-end;
+  gap: 0 var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
+  text-align: right;
 }
 
 .site-nav a {
   display: inline-block;
-  padding-block: var(--space-2);
+  padding-block: var(--space-1);
   font-weight: var(--weight-strong);
   color: var(--navy);
   text-decoration: none;
 }
 
-.site-nav a:hover,
-.site-nav a[aria-current="page"] {
-  color: var(--steel);
+.site-nav a:hover {
+  color: var(--teal-deep);
   text-decoration: underline;
   text-decoration-thickness: 2px;
 }
 
+/* Current page: deep-teal text with a hop-teal underline. */
+.site-nav a[aria-current="page"] {
+  color: var(--teal-deep);
+  text-decoration: underline;
+  text-decoration-color: var(--teal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+}
+
 
 /* --------------------------------------------------------------------------
-   Footer
+   Footer: navy, like the badge banner, under a hop-teal rule
    -------------------------------------------------------------------------- */
 .site-footer {
   flex-shrink: 0;
   background: var(--navy);
-  color: var(--paper);
+  color: var(--white);
+  border-top: 4px solid var(--teal);
   padding-block: var(--space-6);
 }
 
 .site-footer a {
-  color: var(--paper);
+  color: var(--sky);
 }
 
 .site-footer a:hover {
-  color: var(--paper-border);
+  color: var(--white);
 }
 
-/* Steel blue is too faint on navy, so focus rings turn paper here. */
+/* Deep teal is too dark on navy, so focus rings turn sky here. */
 .site-footer :focus-visible {
-  outline-color: var(--paper);
+  outline-color: var(--sky);
 }
 
 .site-footer__tagline {
-  margin: 0 0 var(--space-3);
-  font-weight: var(--weight-strong);
+  margin: 0 0 var(--space-4);
+  font-size: 1.125rem;
+  font-weight: var(--weight-heading);
   letter-spacing: 0.01em;
+  color: var(--white);
 }
 
 .site-footer__label {
   margin: 0 0 var(--space-1);
   font-size: 0.875rem;
-  color: var(--paper-border);
+  color: var(--pale);
 }
 
 .social-links {
@@ -437,8 +434,8 @@ a:hover {
    Card / panel
    -------------------------------------------------------------------------- */
 .card {
-  background: var(--paper);
-  border: 1px solid var(--paper-border);
+  background: var(--pale);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: var(--space-5) var(--space-4);
 }
@@ -452,28 +449,30 @@ a:hover {
   font-size: 1.125rem;
 }
 
-/* Accent: thin steel-blue rule on top, echoing the logo lines. */
+/* Accent: hop-teal rule along the top. */
 .card--accent {
-  border-top: 2px solid var(--steel);
+  border-top: 3px solid var(--teal);
 }
 
-/* Dark panel for a highlighted result. */
+/* Dark panel for a highlighted result: navy like the badge banner. */
 .card--dark {
   background: var(--navy);
   border-color: var(--navy);
-  color: var(--paper);
+  color: var(--white);
 }
 
 .card--dark h2,
 .card--dark h3,
 .card--dark .card__title {
-  color: var(--paper);
+  color: var(--white);
 }
 
-.card--dark a,
+.card--dark a {
+  color: var(--sky);
+}
+
 .card--dark :focus-visible {
-  color: var(--paper);
-  outline-color: var(--paper);
+  outline-color: var(--sky);
 }
 
 
@@ -515,8 +514,8 @@ textarea {
   font-weight: var(--weight-body);
   line-height: 1.4;
   color: var(--navy);
-  background-color: var(--paper);
-  border: 1px solid var(--muted);
+  background-color: var(--white);
+  border: 1px solid var(--muted);  /* 6.22:1 on pale, 6.79:1 on white */
   border-radius: var(--radius);
 }
 
@@ -531,8 +530,8 @@ input[type="number"]:focus-visible,
 input[type="text"]:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  border-color: var(--steel);
-  outline: 2px solid var(--steel);
+  border-color: var(--teal-deep);
+  outline: 2px solid var(--teal-deep);
   outline-offset: 1px;
 }
 
@@ -556,7 +555,7 @@ input[type="checkbox"] {
   width: 1.125rem;
   height: 1.125rem;
   margin: 0;
-  accent-color: var(--steel);
+  accent-color: var(--teal-deep);
 }
 
 fieldset {
@@ -628,7 +627,7 @@ button {
   font-size: 1rem;
   font-weight: var(--weight-strong);
   line-height: 1.2;
-  color: var(--paper);
+  color: var(--white);
   background: var(--navy);
   border: 1px solid var(--navy);
   border-radius: var(--radius);
@@ -638,9 +637,9 @@ button {
 
 .button:hover,
 button:hover {
-  color: var(--paper);
-  background: var(--steel);
-  border-color: var(--steel);
+  color: var(--white);
+  background: var(--teal-deep);
+  border-color: var(--teal-deep);
 }
 
 .button--secondary {
@@ -662,8 +661,9 @@ button:hover {
 .note {
   margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--steel);
-  background: transparent;
+  border-left: 3px solid var(--teal);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--pale);
 }
 
 .note--warning {
@@ -686,8 +686,9 @@ button:hover {
   color: var(--muted);
 }
 
+/* Sky on navy, like NATION on the badge (5.25:1). */
 .card--dark .result__label {
-  color: var(--paper-border);
+  color: var(--sky);
 }
 
 .result__value {
@@ -711,10 +712,7 @@ button:hover {
 @media (min-width: 40em) {
   :root {
     --gutter: 2rem;
-  }
-
-  .logo {
-    font-size: 2.5rem;
+    --badge-height: 5rem;
   }
 
   .card {
@@ -740,8 +738,11 @@ button:hover {
   .site-footer {
     background: none;
     color: var(--navy);
+    border-top-color: var(--line);
   }
 
+  .site-footer__tagline,
+  .site-footer__label,
   .site-footer a {
     color: var(--navy);
   }
