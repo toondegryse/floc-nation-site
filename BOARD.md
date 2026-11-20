@@ -9,8 +9,7 @@ Only the PM edits this file, except for the "Needs you" boxes, which are Toon's.
 
 ## Doing
 
-- **T6 · Calculator test pass** · tester · started Fri 20 Nov
-  - Done when: the module tests pass, edge cases are covered, and the numbers on the page match the module for the reference cases.
+None.
 
 ## In review
 
@@ -18,6 +17,13 @@ None.
 
 ## To do
 
+- **T6a · Reject hex, binary and octal text in number fields** · builder · needs: none · from the T6 review, Fri 20 Nov
+  - Files: `docs/js/priming.js`, `tests/priming.test.js`
+  - Problem: `readNumber` uses `Number()`, so text like `0x14` is read as 20 and the page shows a confident figure for a typo.
+  - Done when: `0x14`, `0b10100` and `0o24` give "… must be a number." in every number field; " 20 ", "2e1", "+20", ".5" and "20." still work; a module test covers it; the 4 failing tests in `tests/calculator.test.js` pass. The tester suggested a fix (a plain-decimal check before `Number()`).
+- **T6 · Calculator test pass** · tester · needs: T6a · failed review once (Fri 20 Nov)
+  - Done when: the module tests pass, edge cases are covered, and the numbers on the page match the module for the reference cases.
+  - Findings: everything passes except hex/binary/octal input (4 tests in `tests/calculator.test.js`, 120 tests added). Rerun after T6a.
 - **T5 · Build the home page from the approved copy** · builder · needs: T1, G1
   - Files: `docs/index.html`
 - **T7 · Phone and accessibility check** · tester · needs: T4, T5
@@ -26,6 +32,7 @@ None.
 - **T8 · Security and privacy review** · security · needs: T4, T5
 - **T9 · Calculator ready for Toon to try** · PM · needs: T6
   - The PM writes "how to try it" in `STATUS.md` and raises gate G2.
+  - Include in "how to try it": typing a decimal on the phone keypad (some keypads only offer a comma, which the page rejects).
 - **T10 · Go-live prep** · builder · needs: G1, G2, T7, T8
   - Files: all pages
   - Done when: favicon from the bottle cap, title and description tags, and a social preview image are ready. `noindex` is removed only after G3.
