@@ -1,6 +1,6 @@
 # Social profiles
 
-The same picture, name and bio line on all four channels, so they read as one brand. The files are in this folder (`brand/social/`). This file is the reference. For the step-by-step list, with the same bios ready to copy, use `UPLOAD.md`.
+The same picture, name and bio line on all four channels, so they read as one brand. The files are in this folder (`brand/social/`), except the Facebook cover, which is on the "Floc Nation logo" canvas. This file is the reference. For the step-by-step list, with the same bios ready to copy, use `UPLOAD.md`.
 
 **The core line.** Every bio starts with it:
 
@@ -64,7 +64,7 @@ Brewed and built in Bangkok. Home brewing problems and tools that fix them.
 - **Name:** Floc Nation
 - **Username:** check that the Page's username is `flocnationbrew`. If it isn't set yet, set it. Look for "Username" in the Page's settings.
 - **Profile picture:** `profile-picture-1080.png`
-- **Cover photo:** `facebook-cover-1702x630.png`
+- **Cover photo:** the "fill line" cover, on the "Floc Nation logo" canvas, under "Social", artboard "Facebook cover · fill line". Download it from there.
 - **Where:** switch to the Floc Nation Page first (your picture › See all profiles › Floc Nation). Tap the camera icon on the profile picture to change it. Tap "Edit" or the camera icon on the cover › Upload photo › Save. Bio and category are under "Edit details" (or "Add bio" in the Intro box).
 - **Bio (Page intro):** limit 101 characters. This bio is 79, the core line on its own.
 
@@ -74,7 +74,7 @@ Brewed and built in Bangkok. Home brewing problems and the tools that fix them.
 
 - **Website:** none for now. Add the website link after go-live (gate G3).
 - **Category (suggestion):** "Video creator", with "Community" as a second if you want one. Avoid "Brewery" or "Bar": they suggest selling beer.
-- **Check the cover:** on a phone, Facebook shows only the middle of the cover, and the profile picture sits over its lower-left corner. The badge sits a little above the middle to stay clear of both. Look at the Page on your phone after saving.
+- **Check the cover:** the cover has no badge, because the profile picture already shows it. On a phone, Facebook shows only the middle of the cover, and the profile picture sits over its lower-left corner. Look at the Page on your phone after saving: the glass edge and the fill line should show, and the profile picture shouldn't hide anything that matters.
 
 ---
 

@@ -1,6 +1,6 @@
 # Upload checklist
 
-Work down the list, one channel at a time. The files are in `brand/social/`. Each bio is below its channel, ready to copy. `PROFILES.md` has the same text, plus notes on where each setting lives. About 15 minutes in total.
+Work down the list, one channel at a time. The files are in `brand/social/`, except the Facebook cover. Each bio is below its channel, ready to copy. `PROFILES.md` has the same text, plus notes on where each setting lives. About 15 minutes in total.
 
 GitHub shows the boxes but doesn't let you tick them here. Copy the list into a note if you want to tick it off, or just read it top to bottom.
 
@@ -8,10 +8,9 @@ Instagram, TikTok and Facebook already show the badge. Replace it anyway, so all
 
 ## Before you start
 
-- [ ] Get the three pictures onto your phone. Open this folder (`brand/social/`) on GitHub in your phone's browser and tap each file. Then tap Download, or long-press the picture and save it (Save to Photos on iPhone, Download image on Android). Or do the uploads from a computer, which is easiest for the YouTube banner.
-  - `profile-picture-1080.png`
-  - `facebook-cover-1702x630.png`
-  - `youtube-banner-2560x1440.png`
+- [ ] Get the three pictures onto your phone, or do the uploads from a computer, which is easiest for the YouTube banner.
+  - `profile-picture-1080.png` and `youtube-banner-2560x1440.png`: open this folder (`brand/social/`) on GitHub in your phone's browser and tap each file. Then tap Download, or long-press the picture and save it (Save to Photos on iPhone, Download image on Android).
+  - The Facebook cover: the "fill line" cover on the "Floc Nation logo" canvas, under "Social", artboard "Facebook cover · fill line". Download it from there.
 
 ## Instagram
 
@@ -52,7 +51,7 @@ Brewed and built in Bangkok. Home brewing problems and tools that fix them.
 - [ ] Switch to the Floc Nation Page, not your personal profile.
 - [ ] Username: check that the Page's username is `flocnationbrew`. If it isn't set yet, set it.
 - [ ] Profile picture: upload `profile-picture-1080.png`.
-- [ ] Cover photo: upload `facebook-cover-1702x630.png` and save.
+- [ ] Cover photo: upload the "fill line" cover from the canvas and save.
 - [ ] Name: `Floc Nation`
 - [ ] Bio: paste this (79 of 101 characters).
 
@@ -62,7 +61,7 @@ Brewed and built in Bangkok. Home brewing problems and the tools that fix them.
 
 - [ ] Category: "Video creator", with "Community" as a second if you want one. Not "Brewery" or "Bar": they suggest selling beer.
 - [ ] Website: leave empty until go-live (gate G3).
-- [ ] Open the Page on your phone: the whole badge shows on the cover, clear of the profile picture.
+- [ ] Open the Page on your phone: the cover shows the glass edge and the fill line, and the profile picture doesn't hide anything that matters.
 
 ## YouTube
 

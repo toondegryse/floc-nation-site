@@ -1,6 +1,6 @@
 # Home page copy (draft)
 
-*Draft home page text, in page order. To approve, tick the G1 card on the Trello board (https://trello.com/b/bFug8tRw/floc-nation-website). To change it, comment `no:` on that card with what to change. Lines in italics are notes, not page text.*
+*Draft home page text, in page order. It now uses your answers from Sat 21 Nov. To approve, tick the G1 card on the Trello board (https://trello.com/b/bFug8tRw/floc-nation-website). To change it, comment `no:` on that card with what to change. Lines in italics are notes, not page text.*
 
 ## 1. Hero
 
@@ -16,11 +16,11 @@ Floc Nation brews beer at home in Bangkok and builds its own tools along the way
 
 *Page heading:* **What we work on**
 
-**Automation.** Tools that take the slow, error-prone steps out of brewing. One is a dextrose dispenser, because measuring priming sugar by hand is fiddly.
+**Automation.** Tools that take the slow, error-prone steps out of brewing. One is a dextrose dispenser, because measuring priming sugar by hand is fiddly. We're still building it.
 
-**Merch.** Floc Nation merch for people who brew. Details to follow.
+**Merch.** A Floc Nation T-shirt for people who brew. It isn't available yet.
 
-**Brew days.** A batch brewed from start to finish. This is where problems show up and fixes get tested.
+**Brew days.** A batch brewed from start to finish. This is where problems show up and fixes get tested. We share brew days online. They aren't open to visitors.
 
 *Automation, Merch and Brew days are placeholder names until you pick final ones.*
 
@@ -42,15 +42,24 @@ Floc Nation is **flocnationbrew** on:
 
 - Instagram: https://www.instagram.com/flocnationbrew/
 - YouTube: https://www.youtube.com/@flocnationbrew
-- Facebook: https://www.facebook.com/flocnationbrew *(not confirmed: is this the right page?)*
 - TikTok: https://www.tiktok.com/@flocnationbrew
+- Facebook: https://www.facebook.com/flocnationbrew
+
+*Same order as the site footer.*
 
 ## Questions for you
 
-*You can approve G1 with the neutral lines above and answer these later.*
+*Your five answers (Sat 21 Nov) are in the copy above. Two choices are still open. A comment on the G1 card is enough.*
 
-1. Should the page say "we" or "I"? The draft says "we".
-2. Merch: what is it, and is it available yet? The site can't sell or take orders, so the line stays general.
-3. Brew days: are they open to other brewers, or shared online only?
-4. Dextrose dispenser: working now, or still being built? The draft doesn't say either way.
-5. Facebook: is the link above the right page?
+**Answered on Sat 21 Nov**
+
+1. "We" or "I"? **We.**
+2. Merch? **A Floc Nation T-shirt, not the cap. Not available yet.**
+3. Brew days? **Shared online only.**
+4. Dextrose dispenser? **Still being built.**
+5. Facebook link? **Yes, it's the right page.**
+
+**Still open**
+
+1. Hero line: option A or option B (section 1)?
+2. Final names for the three ventures. Automation, Merch and Brew days are placeholders until you pick.

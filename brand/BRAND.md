@@ -14,7 +14,7 @@ The "three hops" badge: three teal hop cones above a navy banner, "FLOC" in whit
 - **Use it as it is.** The lettering is artwork, not a font. Never retype it.
 - **Clear space:** at least a quarter of the badge's height on every side. Keep text, edges and other images out of that space.
 - **Minimum size:** 80 px wide on screen (the website header shows it at about 90 px on phones), 25 mm wide in print. Smaller than that, "NATION" gets hard to read. Platforms show profile pictures smaller; that is out of our hands.
-- **Background:** plain white `#FDFDFD` or pale blue `#EEF4F8`. On a navy or dark background, the badge's navy banner disappears into it. Put the badge on a white panel instead, as the YouTube banner and Facebook cover do.
+- **Background:** plain white `#FDFDFD` or pale blue `#EEF4F8`. On a navy or dark background, the badge's navy banner disappears into it. Put the badge on a white panel instead, as the YouTube banner does.
 
 **Don't:**
 
@@ -73,9 +73,11 @@ Contrast ratios behind these rules, measured on white `#FDFDFD`: navy 13.9:1, mu
 - `brand/social/`: the social profile kit.
   - `profile-picture-1080.png`: the badge on white, for all four channels.
   - `youtube-banner-2560x1440.png`: the YouTube banner.
-  - `facebook-cover-1702x630.png`: the Facebook cover.
+  - The Facebook cover is not in this folder. It is the "fill line" cover on the "Floc Nation logo" canvas (a design file outside this repo), under "Social", artboard "Facebook cover · fill line".
   - `PROFILES.md`: names, handles and bios per channel.
   - `UPLOAD.md`: the upload checklist.
 - `docs/assets/floc-nation-badge.svg`: the badge on the website.
 
-The banners are built the same way: a navy background, the badge on a white rounded panel with clear space of a quarter of its height, and a thin sky rule on each side. Nothing sits outside the area each platform shows on every device, and on a 360 px phone the badge shows at least 80 px wide. On the Facebook cover the badge sits a little above the middle, to stay clear of the profile picture.
+The YouTube banner has a navy background, the badge on a white rounded panel with clear space of a quarter of its height, and a thin sky rule on each side. Nothing sits outside the safe area, the part YouTube shows on every device, and on a 360 px phone the badge shows at least 80 px wide.
+
+The Facebook cover has no badge, because the profile picture just below it already shows the badge. It is "fill line": the side of a glass of beer in the badge colours, with no text.

@@ -7,7 +7,7 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 **Where it lives:** the page text is in `docs/th/index.html` and `docs/th/calculator.html`. The text the calculator writes while you type is in `docs/js/i18n.js`. The beer style guides are in `docs/js/styles.js`. Change both the file and this list.
 
 **Choices worth a second look:**
-- *Volumes* (the unit for CO2) is written วอลุ่ม. Many Thai brewers may just say "volumes". Keep วอลุ่ม, or use the English word?
+- *Volumes* (the unit for CO2) is written วอลุ่ม. Decided: Toon keeps วอลุ่ม rather than the English word (Sat 21 Nov).
 - *Batch* is แบตช์ and *priming* is ไพรมิ่ง, as Thai homebrewers usually say them. OK?
 - The tagline is translated: ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ. Or should the Thai pages keep the English "Brewed and built in Bangkok" as a brand line?
 - Words in {curly brackets} are filled in by the page (a number, a style name or a sugar name). Keep them as they are.

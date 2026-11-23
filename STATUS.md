@@ -1,5 +1,23 @@
 # Status
 
+## Mon 23 Nov 2026 · Day 3
+- **Done:**
+  - T19: your Sat 21 Nov answers are in `COPY.md`: "we" throughout, Merch is a Floc Nation T-shirt (not available yet), brew days are shared online, the dextrose dispenser is still being built, and the Facebook link is confirmed. Links follow the footer order. `THAI.md` records "keep วอลุ่ม".
+  - T20: the social kit follows your Facebook cover pick. The old cover with the badge is gone from `brand/social/`, and `UPLOAD.md`, `PROFILES.md` and `BRAND.md` point to the "fill line" cover on the "Floc Nation logo" canvas.
+  - Both passed the tester. Security wasn't needed (docs only). Tests: 605, 0 fail, 4 todo.
+- **Doing:** nothing, waiting on you.
+- **Needs you** (cards in "Needs you" on the Trello board):
+  - G1: read `COPY.md` and tick the card. Optional: pick hero A or B and final venture names. Approving starts the home page (T5) and the Thai home page copy (T16).
+  - T6: tick to have the "no sugar needed" edge case fixed, or comment `no: leave it`. Then G2 (try the calculator on your phone) follows.
+  - Social: upload the "fill line" Facebook cover (export it at 1702×630 or larger), the YouTube banner and the four bios.
+  - G-TH: the native-speaker read of `THAI.md` (แบตช์ / ไพรมิ่ง and the Thai tagline are still open).
+- **Try it:** nothing new on the site. `COPY.md` on GitHub shows the updated home page text.
+- **Risks:**
+  - The "fill line" cover isn't in the repo, so the upload steps depend on the canvas. Its wording ("glass edge and fill line") comes from your description; the run couldn't see it.
+  - `PROJECT.md` still lists the Facebook link as an open question. You've answered it; the PM leaves the brief to you.
+  - Manrope and Noto Sans Thai must be self-hosted before G3.
+  - No PM run left a commit or a card update on Sat 21 or Sun 22 Nov, so your Saturday answers waited until this run (Mon 18:27 Bangkok time). If the morning runs should have happened, check the scheduled task.
+
 ## Fri 20 Nov 2026 · Day 0 · evening, with Toon
 - **Done:**
   - T15: the site is Thai and English. Every page has a ไทย / English switch to its twin in `docs/th/`, and the Thai calculator gives exactly the same numbers as the English one. English stays the default on the preview.
