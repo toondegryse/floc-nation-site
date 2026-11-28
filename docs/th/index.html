@@ -7,7 +7,7 @@
 <!-- Google Fonts entries in style-src and font-src are for the preview only. Remove them once Manrope and Noto Sans Thai are self-hosted (before gate G3). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>Floc Nation · ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ</title>
-<meta name="description" content="Floc Nation คือการต้มเบียร์เองในกรุงเทพฯ ทั้งการต้มเบียร์ เครื่องมืออัตโนมัติที่สร้างขึ้นมาช่วย และคอมมูนิตี้คนต้มเบียร์">
+<meta name="description" content="Floc Nation ต้มเบียร์ที่บ้านในกรุงเทพฯ และสร้างเครื่องมือเองไปด้วย">
 <meta name="theme-color" content="#FDFDFD">
 <link rel="alternate" hreflang="en" href="../">
 <link rel="alternate" hreflang="th" href="./">
@@ -33,15 +33,51 @@
 
 <main id="main" class="site-main">
   <div class="container">
-    <h1>ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ</h1>
-    <p class="lead">เว็บไซต์จะเปิดเร็วๆ นี้</p>
+    <h1 class="hero">ต้มเบียร์เองในกรุงเทพฯ กับเครื่องมือที่ช่วยให้ต้มง่ายขึ้น</h1>
+
+    <section class="section" aria-labelledby="about-heading">
+      <h2 id="about-heading">เกี่ยวกับ Floc Nation</h2>
+      <p>Floc Nation ต้มเบียร์ที่บ้านในกรุงเทพฯ และสร้างเครื่องมือเองไปด้วย เราแชร์ปัญหาที่เจอ ว่าเกิดจากอะไร และแก้ยังไง ชื่อนี้มาจากคำว่า flocculation คือการที่ยีสต์จับตัวกันเป็นก้อนแล้วตกตะกอนลงก้นถัง เบียร์จึงใส</p>
+    </section>
+
+    <section class="section" aria-labelledby="work-heading">
+      <h2 id="work-heading">สิ่งที่เราทำอยู่</h2>
+      <ul class="ventures">
+        <li class="card card--accent">
+          <h3 class="card__title">ระบบอัตโนมัติ</h3>
+          <p>เครื่องมือที่ทำแทนเราในขั้นตอนที่ช้าและพลาดง่ายตอนต้มเบียร์ หนึ่งในนั้นคือเครื่องจ่ายเดกซ์โทรส เพราะการตวงน้ำตาลไพรมิ่งด้วยมือเป็นงานจุกจิก ตัวนี้เรายังสร้างไม่เสร็จ</p>
+        </li>
+        <li class="card card--accent">
+          <h3 class="card__title">เมอร์ช</h3>
+          <p>เสื้อยืด Floc Nation สำหรับคนต้มเบียร์ ตอนนี้ยังไม่พร้อม</p>
+        </li>
+        <li class="card card--accent">
+          <h3 class="card__title">วันต้มเบียร์</h3>
+          <p>ต้มเบียร์หนึ่งแบตช์ตั้งแต่ต้นจนจบ เป็นวันที่ปัญหาโผล่ออกมา และได้ลองวิธีแก้ เราแชร์วันต้มเบียร์ทางออนไลน์ แต่ไม่ได้เปิดให้คนแวะมาดู</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="calculator-heading">
+      <h2 id="calculator-heading">คำนวณน้ำตาลไพรมิ่ง</h2>
+      <p>ถ้าใกล้จะบรรจุขวดแล้ว เครื่องคำนวณน้ำตาลไพรมิ่งจะบอกว่าต้องใส่น้ำตาลเท่าไร ทั้งแบตช์และต่อขวด</p>
+      <p><a class="button" href="calculator.html">เปิดเครื่องคำนวณ</a></p>
+    </section>
+
+    <section class="section" aria-labelledby="community-heading">
+      <h2 id="community-heading">คำถามและวิธีแก้</h2>
+      <p>ถ้าคุณก็ต้มเบียร์เอง ไม่ว่าจะในกรุงเทพฯ หรือที่ไหนก็ตาม มาถามหรือแชร์วิธีแก้ของคุณได้ทุกช่องทางด้านล่าง</p>
+    </section>
   </div>
 </main>
 
+<!-- On the home page the footer holds the "Follow along" section (COPY.md,
+     section 6), so the four links show once. The calculator pages keep the
+     short footer: tagline, "Find us as flocnationbrew on" and the links. -->
 <footer class="site-footer">
   <div class="container">
-    <p class="site-footer__tagline">ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ</p>
-    <p class="site-footer__label" id="social-label">ติดตามเราในชื่อ flocnationbrew ได้ที่</p>
+    <h2 class="site-footer__heading">ติดตามเรา</h2>
+    <p class="site-footer__label" id="social-label">Floc Nation ใช้ชื่อ <strong>flocnationbrew</strong> ในทุกช่องทาง</p>
     <nav aria-labelledby="social-label">
       <ul class="social-links">
         <li><a href="https://www.instagram.com/flocnationbrew/">Instagram</a></li>
@@ -50,6 +86,7 @@
         <li><a href="https://www.facebook.com/flocnationbrew">Facebook</a></li>
       </ul>
     </nav>
+    <p class="site-footer__tagline">ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ</p>
   </div>
 </footer>
 </body>

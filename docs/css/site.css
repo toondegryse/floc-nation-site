@@ -485,6 +485,28 @@ a:hover {
   font-weight: var(--weight-strong);
 }
 
+/* Home page only: the footer holds the "Follow along" section (heading,
+   the flocnationbrew line, the links), and the tagline closes the page.
+   The calculator pages have no heading here and keep the tagline first,
+   so none of these rules reach them. */
+.site-footer__heading {
+  margin: 0 0 var(--space-2);
+  color: var(--white);
+}
+
+.site-footer__heading + .site-footer__label {
+  margin-bottom: var(--space-2);
+  font-size: 1rem;
+}
+
+.site-footer__label strong {
+  color: var(--white);
+}
+
+.site-footer nav + .site-footer__tagline {
+  margin: var(--space-6) 0 0;
+}
+
 
 /* --------------------------------------------------------------------------
    Card / panel
@@ -769,6 +791,47 @@ button:hover {
 
 
 /* --------------------------------------------------------------------------
+   Home page: hero headline, sections and the three ventures
+   -------------------------------------------------------------------------- */
+
+/* The hero line is the page's h1: a little larger than other page titles,
+   with lines kept even so a short last word doesn't sit alone. */
+.hero {
+  max-width: 20em;
+  font-size: clamp(1.875rem, 1.3rem + 2.8vw, 3rem);
+  text-wrap: balance;
+}
+
+/* One block of the home page: an h2 and its text. */
+.section {
+  margin-top: var(--space-7);
+}
+
+.section > h2 {
+  margin-top: 0;
+}
+
+/* Keep paragraphs to a comfortable reading width on wide screens. */
+.section > p {
+  max-width: 40rem;
+}
+
+.section > :last-child {
+  margin-bottom: 0;
+}
+
+/* The three ventures: pale cards, one column on phones, three in a row
+   on wide screens (see "Wider screens"). */
+.ventures {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+
+/* --------------------------------------------------------------------------
    Wider screens
    -------------------------------------------------------------------------- */
 @media (min-width: 40em) {
@@ -779,6 +842,13 @@ button:hover {
 
   .card {
     padding: var(--space-5);
+  }
+}
+
+@media (min-width: 52em) {
+  .ventures {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
   }
 }
 
