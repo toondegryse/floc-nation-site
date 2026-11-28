@@ -19,6 +19,7 @@ import {
   targetForStyle,
 } from '../docs/js/calculator.js';
 import { BOTTLE_SIZES_ML, STYLE_PRESETS, calculatePriming, residualCO2 } from '../docs/js/priming.js';
+import { TEXT } from '../docs/js/i18n.js';
 
 const PROJECT_MD = readFileSync(new URL('../PROJECT.md', import.meta.url), 'utf8');
 const CALCULATOR_HTML = readFileSync(new URL('../docs/calculator.html', import.meta.url), 'utf8');
@@ -1137,5 +1138,178 @@ describe('Thai calculator page, th/calculator.html (stand-in DOM, T15)', () => {
     const page = await openPage();
     assert.equal(page.el('bottle-size').children[0].textContent, '330 ml');
     assert.equal(page.text('note-high-pressure'), NOTES.highPressure);
+  });
+});
+
+// ==========================================================================
+// Added by the tester in the T6 final run (Sat 28 Nov)
+// ==========================================================================
+
+/**
+ * The PROJECT.md residual CO2 as exact decimal text, worked in whole numbers
+ * (BigInt), not with priming.js. tenthsC is the temperature in tenths of a
+ * degree; offsetPico moves the text in steps of 0.000000000001 volumes.
+ */
+function exactResidualText(tenthsC, offsetPico = 0n) {
+  const f100 = 18n * BigInt(tenthsC) + 3200n; // °F × 100
+  const pico = 3037800000000n - 50062n * f100 * 10000n + 26555n * f100 * f100 + offsetPico;
+  const digits = pico.toString().padStart(13, '0');
+  return `${digits.slice(0, -12)}.${digits.slice(-12)}`.replace(/0+$/, '').replace(/\.$/, '');
+}
+
+const TH_NO_SUGAR = TEXT.th.notes.noSugarNeeded;
+const TH_HIGH_PRESSURE = TEXT.th.notes.highPressure;
+
+describe('target at the residual CO2 on the page, every 0.1 °C (T6 final run)', () => {
+  const expectedNote = { en: NO_SUGAR_TEXT, th: TH_NO_SUGAR };
+  for (const lang of ['en', 'th']) {
+    test(`${lang === 'en' ? 'English' : 'Thai'} view: a target typed as the exact residual at every 0.1 °C from 0 to 40 °C shows the no-sugar note and 0.0 g / 0.00 g (both sugars)`, () => {
+      const wrong = [];
+      for (let tenthsC = 0; tenthsC <= 400; tenthsC += 1) {
+        for (const sugar of ['dextrose', 'table']) {
+          const raw = { tempC: String(tenthsC / 10), targetVols: exactResidualText(tenthsC), sugar };
+          const v = view(raw, { lang });
+          if (JSON.stringify(v.notes) !== JSON.stringify([expectedNote[lang]]) || v.batchText !== '0.0' || v.perBottleText !== '0.00') {
+            wrong.push(`${JSON.stringify(raw)}: notes ${JSON.stringify(v.notes)}, ${v.batchText} g, ${v.perBottleText} g`);
+          }
+        }
+      }
+      assert.deepEqual(wrong, []);
+    });
+  }
+
+  test('at 1,000 litres a target 0.0001 vols above the exact residual shows 0.4 g and no note', () => {
+    // 0.0001 vols × 1,000 L × 4.0 g = 0.4 g: the tolerance must not hide it.
+    const v = view({ litres: '1000', tempC: '20', targetVols: exactResidualText(200, 100000000n) });
+    assert.deepEqual(v.notes, []);
+    assert.equal(v.batchText, '0.4');
+  });
+});
+
+describe('Thai view: same numbers and notes as English (T6 final run)', () => {
+  for (const sugar of ['dextrose', 'table']) {
+    test(`Thai view: the three reference cases with ${sugar} give the English figures`, () => {
+      for (const c of REFERENCE_CASES) {
+        const raw = { litres: c.litres, tempC: c.tempC, targetVols: c.targetVols, sugar };
+        const en = view(raw);
+        const th = view(raw, { lang: 'th' });
+        assert.equal(th.batchText, en.batchText, `${label(c)} batch`);
+        assert.equal(th.perBottleText, en.perBottleText, `${label(c)} per bottle`);
+        assertShowsModule(th, moduleResult({ ...c, sugar }));
+      }
+    });
+  }
+
+  test('Thai view: the high-pressure note shows above 3.0 vols (3.01) and not at exactly 3.0', () => {
+    assert.deepEqual(view({ targetVols: '3.01' }, { lang: 'th' }).notes, [TH_HIGH_PRESSURE]);
+    assert.deepEqual(view({ targetVols: '3.0' }, { lang: 'th' }).notes, []);
+  });
+
+  test('Thai view: 0 litres, negative values, temperatures outside 0–40 °C and empty fields give no figures and no notes', () => {
+    const bad = [
+      { litres: '0' }, { litres: '-5' }, { litres: '' },
+      { tempC: '-1' }, { tempC: '-0.01' }, { tempC: '40.01' }, { tempC: '45' }, { tempC: '' },
+      { targetVols: '0' }, { targetVols: '-1' }, { targetVols: '' },
+      { bottleSize: CUSTOM_BOTTLE, customBottleMl: '-330' }, { bottleSize: CUSTOM_BOTTLE, customBottleMl: '' },
+    ];
+    for (const overrides of bad) {
+      // A 3.5 target would add a note if a result slipped through.
+      const v = view({ targetVols: '3.5', ...overrides }, { lang: 'th' });
+      assert.equal(Object.keys(v.errors).length, 1, `${JSON.stringify(overrides)}: ${JSON.stringify(v.errors)}`);
+      assertNoResult(v);
+    }
+  });
+});
+
+describe('figures never show a minus sign (T6 final run)', () => {
+  test('the batch and per-bottle figures never show a minus sign (0–40 °C, targets 0.01–3.00 vols, both sugars)', () => {
+    const wrong = [];
+    for (let tempC = 0; tempC <= 40; tempC += 1) {
+      for (let hundredths = 1; hundredths <= 300; hundredths += 1) {
+        for (const sugar of ['dextrose', 'table']) {
+          const v = view({ tempC: String(tempC), targetVols: String(hundredths / 100), sugar });
+          if (v.batchText.startsWith('-') || v.perBottleText.startsWith('-')) wrong.push(`${tempC} °C, ${hundredths / 100} vols, ${sugar}: ${v.batchText} / ${v.perBottleText}`);
+        }
+      }
+    }
+    assert.deepEqual(wrong, []);
+  });
+});
+
+describe('numbers too big to work out (T6 final run)', () => {
+  test('a batch sugar too big to work out (1e308 litres, or a 1e307 vols target) gives a field message and no figures instead of throwing', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, () => {
+    for (const overrides of [{ litres: '1e308' }, { targetVols: '1e307' }]) {
+      let v;
+      assert.doesNotThrow(() => { v = view(overrides); }, `computeView threw for ${JSON.stringify(overrides)}`);
+      assertNoResult(v);
+      assert.ok(Object.keys(v.errors).length > 0, `${JSON.stringify(overrides)}: no field message`);
+    }
+  });
+
+  test('a per-bottle figure too big to work out (1e160 litres, 1e162 ml custom bottle) is never shown as "Infinity"', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, () => {
+    const v = view({ litres: '1e160', bottleSize: CUSTOM_BOTTLE, customBottleMl: '1e162' });
+    assert.ok(!/Infinity/.test(v.perBottleText) && !/Infinity/.test(v.batchText), `shows ${v.batchText} g and ${v.perBottleText} g`);
+  });
+});
+
+describe('page wiring: target at the residual, Thai page and big numbers (stand-in DOM, T6 final run)', () => {
+  const openThaiWithCase = async (c) => {
+    const page = await openPage(CALCULATOR_TH_HTML);
+    page.type('litres', c.litres);
+    page.type('temp-c', c.tempC);
+    page.type('target-vols', c.targetVols);
+    return page;
+  };
+
+  test('English page: typing the exact residual (0.8614872 at 20 °C) shows the no-sugar note and 0.0 g', async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], targetVols: '0.8614872' });
+    assert.ok(page.shown('note-no-sugar'), 'no-sugar note shown');
+    assert.equal(page.text('note-no-sugar'), NO_SUGAR_TEXT);
+    assert.ok(!page.shown('note-high-pressure'));
+    assert.equal(page.text('batch-grams'), '0.0');
+    assert.equal(page.text('per-bottle-grams'), '0.00');
+  });
+
+  test('English page: moving the target from the exact residual to 0.001 vols above it hides the no-sugar note and shows 0.1 g', async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], targetVols: '0.8614872' });
+    assert.ok(page.shown('note-no-sugar'));
+    page.type('target-vols', '0.8624872');
+    assert.ok(!page.shown('note-no-sugar'), 'no-sugar note hidden');
+    assert.equal(page.text('batch-grams'), '0.1');
+  });
+
+  test('Thai page: typing the exact residual (0.8614872 at 20 °C) shows the Thai no-sugar note and 0.0 g', async () => {
+    const page = await openThaiWithCase({ ...REFERENCE_CASES[0], targetVols: '0.8614872' });
+    assert.ok(page.shown('note-no-sugar'), 'no-sugar note shown');
+    assert.equal(page.text('note-no-sugar'), TH_NO_SUGAR);
+    assert.equal(page.text('batch-grams'), '0.0');
+    assert.equal(page.text('per-bottle-grams'), '0.00');
+  });
+
+  test('Thai page: a volume of 0 or less hides the figures and shows the Thai volume error', async () => {
+    for (const litres of ['0', '-5']) {
+      const page = await openThaiWithCase(REFERENCE_CASES[0]);
+      assert.ok(page.shown('result-values'), 'figures shown before');
+      page.type('litres', litres);
+      assert.ok(!page.shown('result-values'), `figures hidden for ${litres} L`);
+      assert.ok(page.shown('litres-error'));
+      assert.equal(page.text('litres-error'), TEXT.th.errors['litres.not-positive']);
+    }
+  });
+
+  test('typing a batch too big to work out (1e30 then 1e308 litres) does not leave the old figures on screen', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], litres: '1e30' });
+    const before = page.text('batch-grams');
+    let thrown = null;
+    // A browser logs an error thrown in an input handler and carries on, so
+    // catch it here and look at what the page is left showing.
+    try { page.type('litres', '1e308'); } catch (err) { thrown = err; }
+    const stale = page.shown('result-values') && page.text('batch-grams') === before;
+    assert.equal(
+      stale,
+      false,
+      `the page still shows ${before} g (the 1e30 litres figure) while the field says 1e308` +
+        (thrown ? `; the input handler threw ${thrown.name}: ${thrown.message}` : ''),
+    );
   });
 });

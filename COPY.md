@@ -1,6 +1,6 @@
 # Home page copy
 
-*Home page text, in page order. You approved it on Sat 28 Nov (G1) and picked hero option A. The English is final. Two things are new: three headings the builder picked (sections 2, 4 and 5), for you to glance at, and a Thai draft at the end, which waits for the Thai check. The only open choice is optional: final names for the ventures (see the end). Lines in italics are notes, not page text.*
+*Home page text, in page order. You approved it on Sat 28 Nov (G1) and picked hero option A. The English is final, including the three headings the builder picked for sections 2, 4 and 5 (you kept them the same day). The Thai draft at the end waits for the Thai check. The only open choice is optional: final names for the ventures (see the end). Lines in italics are notes, not page text.*
 
 ## 1. Hero
 
@@ -12,7 +12,7 @@
 
 *Page heading:* **About Floc Nation**
 
-*Builder-picked heading: the approved copy had none here. Glance at it and say if you want another.*
+*Builder-picked heading, kept by Toon on Sat 28 Nov.*
 
 Floc Nation brews beer at home in Bangkok and builds its own tools along the way. We share what goes wrong, why, and how it gets fixed. The name comes from flocculation: yeast clumping together and dropping out, so the beer clears.
 
@@ -32,7 +32,7 @@ Floc Nation brews beer at home in Bangkok and builds its own tools along the way
 
 *Page heading:* **Priming-sugar calculator**
 
-*Builder-picked heading: the approved copy had none here. It is the same as the calculator page's own heading. Glance at it and say if you want another.*
+*Builder-picked heading, kept by Toon on Sat 28 Nov. It is the same as the calculator page's own heading.*
 
 Bottling soon? The priming-sugar calculator tells you how much sugar to add, for the whole batch and per bottle.
 
@@ -42,7 +42,7 @@ Bottling soon? The priming-sugar calculator tells you how much sugar to add, for
 
 *Page heading:* **Questions and fixes**
 
-*Builder-picked heading: the approved copy had none here. Glance at it and say if you want another.*
+*Builder-picked heading, kept by Toon on Sat 28 Nov.*
 
 Brewing at home, in Bangkok or anywhere else? Bring your questions and your fixes to any of the accounts below.
 
@@ -75,6 +75,7 @@ Floc Nation is **flocnationbrew** on:
 
 1. Hero line, option A or B? **A: "Home brewing in Bangkok, and the tools that make it easier."**
 2. Venture names? **Keep Automation, Merch and Brew days for now.**
+3. The three builder-picked headings (About Floc Nation, Priming-sugar calculator, Questions and fixes)? **Keep all three.**
 
 **Still open (optional)**
 

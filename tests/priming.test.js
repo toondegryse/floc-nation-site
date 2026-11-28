@@ -921,6 +921,138 @@ describe('target exactly at the residual CO2 (T6 second run)', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Added by the tester in the T6 final run (Sat 28 Nov).
+// ---------------------------------------------------------------------------
+
+/**
+ * The PROJECT.md residual CO2 as exact decimal text, worked in whole numbers
+ * (BigInt) rather than with priming.js, so it has no floating-point error.
+ * tenthsC is the temperature in tenths of a degree (205 is 20.5 °C).
+ * offsetPico moves the text up or down in steps of 0.000000000001 volumes.
+ *   F × 100          = 18 × (C × 10) + 3200
+ *   residual × 10^12 = 3.0378 × 10^12 − 0.050062 × F × 10^12 + 0.00026555 × F² × 10^12
+ */
+function exactResidualText(tenthsC, offsetPico = 0n) {
+  const f100 = 18n * BigInt(tenthsC) + 3200n;
+  const pico = 3037800000000n - 50062n * f100 * 10000n + 26555n * f100 * f100 + offsetPico;
+  assert.ok(pico > 0n, 'the helper only writes positive volumes');
+  const digits = pico.toString().padStart(13, '0');
+  return `${digits.slice(0, -12)}.${digits.slice(-12)}`.replace(/0+$/, '').replace(/\.$/, '');
+}
+
+/** Every temperature from 0 to 40 °C in steps of 0.1 °C, in tenths of a degree. */
+const EVERY_TENTH_C = Array.from({ length: 401 }, (_, i) => i);
+const ONE_THOUSANDTH_VOL = 1000000000n; // 0.001 volumes, in steps of 10^-12
+
+describe('target at, just above and well around the residual CO2 (T6 final run)', () => {
+  test('the exact residual helper agrees with the hand-worked PROJECT.md residuals', () => {
+    assert.equal(exactResidualText(0), '1.7077392');
+    assert.equal(exactResidualText(200), '0.8614872');
+    assert.equal(exactResidualText(250), '0.75747195');
+    assert.equal(exactResidualText(300), '0.6964758');
+    assert.equal(exactResidualText(400), '0.7035408');
+  });
+
+  for (const sugar of ['dextrose', 'table']) {
+    test(`a target typed as the exact residual at every 0.1 °C from 0 to 40 °C flags no sugar needed and gives 0 g (${sugar})`, () => {
+      const wrong = [];
+      for (const tenthsC of EVERY_TENTH_C) {
+        const tempC = String(tenthsC / 10);
+        const targetVols = exactResidualText(tenthsC);
+        const result = calculatePriming({ litres: '20', tempC, targetVols, sugar });
+        if (!result.noSugarNeeded || result.batchGrams !== 0 || result.perBottleGrams !== 0) {
+          wrong.push(`${tempC} °C, target "${targetVols}": noSugarNeeded ${result.noSugarNeeded}, ${result.batchGrams} g`);
+        }
+      }
+      assert.deepEqual(wrong, []);
+    });
+
+    test(`a target 0.001 vols above the exact residual at every 0.1 °C from 0 to 40 °C needs sugar and raises no no-sugar flag (${sugar})`, () => {
+      // 0.001 vols × 20 L × factor: 0.08 g dextrose, 0.0764 g table sugar.
+      const expected = 0.001 * 20 * SUGAR_FACTORS[sugar];
+      const wrong = [];
+      for (const tenthsC of EVERY_TENTH_C) {
+        const tempC = String(tenthsC / 10);
+        const targetVols = exactResidualText(tenthsC, ONE_THOUSANDTH_VOL);
+        const result = calculatePriming({ litres: '20', tempC, targetVols, sugar });
+        if (result.noSugarNeeded || Math.abs(result.batchGrams - expected) > 1e-9) {
+          wrong.push(`${tempC} °C, target "${targetVols}": noSugarNeeded ${result.noSugarNeeded}, ${result.batchGrams} g`);
+        }
+      }
+      assert.deepEqual(wrong, []);
+    });
+  }
+
+  test('at 1,000 litres a target 0.000001 vols above the exact residual still needs 0.004 g and raises no flag', () => {
+    // 0.000001 vols × 1,000 L × 4.0 g = 0.004 g. The tolerance must not swallow it.
+    const targetVols = exactResidualText(200, 1000000n);
+    const result = calculatePriming({ litres: 1000, tempC: 20, targetVols, bottleMl: 330 });
+    assert.equal(result.noSugarNeeded, false, `target "${targetVols}"`);
+    assertNear(result.batchGrams, 0.004, 1e-9);
+  });
+
+  test('a "no sugar needed" result never hides 0.05 g or more of sugar, for batches up to 1,000,000 litres', () => {
+    // 0.05 g is half the last digit the page shows for the batch (0.1 g).
+    // Targets step through the residual 0.0000000001 vols at a time, from
+    // 0.000000005 below it to 0.000000005 above it. The sugar the formula asks
+    // for is worked from the exact decimal step, not from priming.js.
+    const wrong = [];
+    for (const litres of [20, 1000, 1000000]) {
+      for (const tenthsC of [0, 200, 250, 300, 400]) {
+        for (let step = -50; step <= 50; step += 1) {
+          const targetVols = exactResidualText(tenthsC, BigInt(step) * 100n);
+          const formulaGrams = Math.max(0, step * 1e-10) * litres * SUGAR_FACTORS.dextrose;
+          const result = calculatePriming({ litres, tempC: tenthsC / 10, targetVols, bottleMl: 330 });
+          if (result.noSugarNeeded && formulaGrams >= 0.05) {
+            wrong.push(`${litres} L, ${tenthsC / 10} °C, target "${targetVols}": no sugar, but the formula asks for ${formulaGrams} g`);
+          }
+          if (!result.noSugarNeeded && Math.abs(result.batchGrams - formulaGrams) > 1e-6) {
+            wrong.push(`${litres} L, ${tenthsC / 10} °C, target "${targetVols}": ${result.batchGrams} g, formula ${formulaGrams} g`);
+          }
+        }
+      }
+    }
+    assert.deepEqual(wrong, []);
+  });
+});
+
+describe('grams are never negative (T6 final run)', () => {
+  // 0 to 40 °C every 1 °C, targets 0.01 to 6.00 vols every 0.01, both sugars,
+  // one bottle's worth up to a million litres.
+  function* sweep() {
+    for (let tempC = 0; tempC <= 40; tempC += 1) {
+      for (let hundredths = 1; hundredths <= 600; hundredths += 1) {
+        for (const sugar of ['dextrose', 'table']) {
+          for (const litres of [0.33, 20, 1000, 1000000]) {
+            yield { litres, tempC, targetVols: hundredths / 100, sugar, bottleMl: 330 };
+          }
+        }
+      }
+    }
+  }
+
+  test('batch and per-bottle grams are never negative or -0 (0–40 °C, 0.01–6.00 vols, both sugars, 0.33 L to 1,000,000 L)', () => {
+    const wrong = [];
+    for (const inputs of sweep()) {
+      const { batchGrams, perBottleGrams } = calculatePriming(inputs);
+      for (const grams of [batchGrams, perBottleGrams]) {
+        if (!(grams >= 0) || Object.is(grams, -0)) wrong.push(`${JSON.stringify(inputs)}: ${grams} g`);
+      }
+    }
+    assert.deepEqual(wrong.slice(0, 10), []);
+  });
+
+  test('"no sugar needed" is flagged exactly when the batch needs 0 g (same inputs)', () => {
+    const wrong = [];
+    for (const inputs of sweep()) {
+      const { batchGrams, noSugarNeeded } = calculatePriming(inputs);
+      if (noSugarNeeded !== (batchGrams === 0)) wrong.push(`${JSON.stringify(inputs)}: ${batchGrams} g, noSugarNeeded ${noSugarNeeded}`);
+    }
+    assert.deepEqual(wrong.slice(0, 10), []);
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')
