@@ -14,6 +14,7 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 - Home page copy (T16): loanwords and new terms. *Dextrose dispenser* is เครื่องจ่ายเดกซ์โทรส. *Flocculation* stays in English letters, so readers see where "Floc" comes from (or ฟล็อกคูเลชัน?). แชร์ is used for "share". OK?
 - Home page copy (T16): the tone is relaxed and spoken, as in แก้ยังไง, โผล่ and แวะมาดู. Right for the brand, or a little more formal (แก้อย่างไร)?
 - Home page copy (T16): the T-shirt "isn't available yet" is ตอนนี้ยังไม่พร้อม, to avoid words about selling or ordering. Does it read naturally?
+- Home page copy (T16), points from the review: the hero ต้มเบียร์เองในกรุงเทพฯ กับเครื่องมือที่ช่วยให้ต้มง่ายขึ้น: does กับ read as "brewing *with* tools" rather than "brewing, *and* the tools"? The Automation line (เครื่องมือที่ทำแทนเรา… and the เพราะ… sentence about the dispenser) may follow the English word order too closely. Brew days: และได้ลองวิธีแก้ has no subject. Spoken words (ยังไง, โผล่) sit next to written ones (จึง, เท่าไร): is the mix OK? เมอร์ช or เมิร์ช? The venture name is ระบบอัตโนมัติ, but the calculator page's description says เครื่องมืออัตโนมัติ: should they match?
 - Words in {curly brackets} are filled in by the page (a number, a style name or a sugar name). Keep them as they are.
 - Error messages are listed by the field and problem they cover, e.g. (tempC.out-of-range).
 
@@ -32,7 +33,7 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 
 ## Home page copy (T16, draft)
 
-The approved home page text from `COPY.md`, with a Thai draft. It goes on `docs/th/index.html` when the home page is built, so it isn't on the site yet. Each row is one piece of text on the page: a heading, a bold name, a paragraph or the link. Bold is left out here, so the table shows the words only.
+The approved home page text from `COPY.md`, with a Thai draft. It is on the preview's Thai home page (`docs/th/index.html`) since Sat 28 Nov, as a draft, until this check is done. Each row is one piece of text on the page: a heading, a bold name, a paragraph or the link. Bold is left out here, so the table shows the words only.
 
 | English | ไทย (Thai) |
 |---|---|
