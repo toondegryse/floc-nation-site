@@ -929,6 +929,46 @@ describe('site.css: loads nothing from other sites', () => {
   });
 });
 
+describe('site.css: font weights (CLAUDE.md, Brand; T5, T7)', () => {
+  const root = screenRules.find((r) => !r.media && r.selectors.includes(':root'));
+  // A font-weight value as a number, following var(--weight-...) tokens.
+  const weightOf = (value) => {
+    const v = (value ?? '').match(/^var\(\s*(--[\w-]+)\s*\)$/);
+    return Number(v ? root.decls[v[1]] : value);
+  };
+  const weightRules = screenRules.filter((r) => r.decls['font-weight'] !== undefined);
+  // Every tag that carries a class, on every page.
+  const tagsWithClass = (cls) =>
+    pages.flatMap((p) => tags(read(join(DOCS, p))))
+      .filter((t) => (attr(t, 'class') ?? '').split(/\s+/).includes(cls))
+      .map((t) => t.match(/^<([a-z0-9]+)/i)[1].toLowerCase());
+
+  test('every font-weight in site.css is 500, 600 or 800', () => {
+    for (const r of weightRules) {
+      assert.ok([500, 600, 800].includes(weightOf(r.decls['font-weight'])), `${r.selectors.join(', ')} { font-weight: ${r.decls['font-weight']} }`);
+    }
+  });
+
+  test(
+    'only headlines (h1, h2, h3) use ExtraBold (800)',
+    { todo: 'CLAUDE.md keeps 800 for headlines and 500/600 for everything else. The result figures (.result__value) and the footer tagline (.site-footer__tagline) use 800. Waiting on a decision: change them to 600, or note an exception in CLAUDE.md.' },
+    () => {
+      const offenders = [];
+      for (const r of weightRules.filter((x) => weightOf(x.decls['font-weight']) === 800)) {
+        for (const s of r.selectors) {
+          const last = s.split(/[\s>+~]+/).filter(Boolean).at(-1);
+          const tag = last.match(/^[a-z][a-z0-9]*/i)?.[0]?.toLowerCase();
+          const classes = [...last.matchAll(/\.([\w-]+)/g)].map((m) => m[1]);
+          const onTags = tag ? [tag] : classes.flatMap(tagsWithClass);
+          const notHeadings = [...new Set(onTags.filter((t) => !/^h[1-3]$/.test(t)))];
+          if (notHeadings.length) offenders.push(`${s} (on ${notHeadings.join(', ')})`);
+        }
+      }
+      assert.deepEqual(offenders, []);
+    },
+  );
+});
+
 describe('fonts', () => {
   test(
     'Manrope is self-hosted in docs/fonts with its licence',
