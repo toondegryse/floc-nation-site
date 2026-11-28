@@ -37,6 +37,21 @@ export const TEMP_RANGE_C = Object.freeze({ min: 0, max: 40 });
 export const HIGH_PRESSURE_VOLS = 3.0;
 
 /**
+ * A target this close to the residual CO2 (in volumes) counts as at the
+ * residual: no sugar needed, 0 g. Floating point can put the computed
+ * residual about 1e-16 volumes off the exact decimal, so a target typed as
+ * the exact residual could read as a hair above it. 1e-9 absorbs that with
+ * room to spare and is far too small to matter: on 1,000 litres it is
+ * under 0.00001 g of sugar.
+ */
+const AT_RESIDUAL_VOLS = 1e-9;
+
+/** True when the target is at or below the residual CO2, within AT_RESIDUAL_VOLS. */
+function atOrBelowResidual(target, residual) {
+  return target - residual <= AT_RESIDUAL_VOLS;
+}
+
+/**
  * Beer style presets for the target CO2, in volumes.
  * Custom has no range and no default: the brewer types a target.
  */
@@ -101,7 +116,7 @@ export function residualCO2(tempC) {
 /**
  * Grams of priming sugar for the whole batch.
  * Returns 0, never a negative number, when the target is at or below
- * the residual CO2.
+ * the residual CO2 (within AT_RESIDUAL_VOLS).
  * @param {object} inputs
  * @param {number|string} inputs.litres     Beer volume in litres, more than 0.
  * @param {number|string} inputs.tempC      Highest temperature in °C, 0 to 40.
@@ -115,7 +130,7 @@ export function batchSugarGrams(inputs) {
   const residual = residualCO2(tempC);
   const target = readPositive(targetVols, 'targetVols');
   const factor = readSugarFactor(sugar);
-  return Math.max(0, (target - residual) * batchLitres * factor);
+  return atOrBelowResidual(target, residual) ? 0 : (target - residual) * batchLitres * factor;
 }
 
 /**
@@ -179,7 +194,7 @@ export function calculatePriming(inputs) {
     residual,
     batchGrams,
     perBottleGrams,
-    noSugarNeeded: target <= residual,
+    noSugarNeeded: atOrBelowResidual(target, residual),
     highPressure: target > HIGH_PRESSURE_VOLS,
   };
 }

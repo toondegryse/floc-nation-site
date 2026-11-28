@@ -10,6 +10,10 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 - *Volumes* (the unit for CO2) is written วอลุ่ม. Decided: Toon keeps วอลุ่ม rather than the English word (Sat 21 Nov).
 - *Batch* is แบตช์ and *priming* is ไพรมิ่ง, as Thai homebrewers usually say them. OK?
 - The tagline is translated: ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ. Or should the Thai pages keep the English "Brewed and built in Bangkok" as a brand line?
+- Home page copy (T16): the three venture names are Thai words, ระบบอัตโนมัติ, เมอร์ช and วันต้มเบียร์, not the English Automation, Merch and Brew days. All three are placeholders for now. Is เมอร์ช clear to Thai homebrewers, or is เสื้อ (shirt) better while the merch is only a T-shirt?
+- Home page copy (T16): loanwords and new terms. *Dextrose dispenser* is เครื่องจ่ายเดกซ์โทรส. *Flocculation* stays in English letters, so readers see where "Floc" comes from (or ฟล็อกคูเลชัน?). แชร์ is used for "share". OK?
+- Home page copy (T16): the tone is relaxed and spoken, as in แก้ยังไง, โผล่ and แวะมาดู. Right for the brand, or a little more formal (แก้อย่างไร)?
+- Home page copy (T16): the T-shirt "isn't available yet" is ตอนนี้ยังไม่พร้อม, to avoid words about selling or ordering. Does it read naturally?
 - Words in {curly brackets} are filled in by the page (a number, a style name or a sugar name). Keep them as they are.
 - Error messages are listed by the field and problem they cover, e.g. (tempC.out-of-range).
 
@@ -28,6 +32,30 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 | Priming calculator | คำนวณน้ำตาลไพรมิ่ง |
 | Brewed and built in Bangkok. | ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ |
 | Site coming soon. | เว็บไซต์จะเปิดเร็วๆ นี้ |
+
+## Home page copy (T16, draft)
+
+The approved home page text from `COPY.md`, with a Thai draft. It goes on `docs/th/index.html` when the home page is built, so it isn't on the site yet. Each row is one piece of text on the page: a heading, a bold name, a paragraph or the link. Bold is left out here, so the table shows the words only.
+
+| English | ไทย (Thai) |
+|---|---|
+| Home brewing in Bangkok, and the tools that make it easier. | ต้มเบียร์เองในกรุงเทพฯ กับเครื่องมือที่ช่วยให้ต้มง่ายขึ้น |
+| About Floc Nation | เกี่ยวกับ Floc Nation |
+| Floc Nation brews beer at home in Bangkok and builds its own tools along the way. We share what goes wrong, why, and how it gets fixed. The name comes from flocculation: yeast clumping together and dropping out, so the beer clears. | Floc Nation ต้มเบียร์ที่บ้านในกรุงเทพฯ และสร้างเครื่องมือเองไปด้วย เราแชร์ปัญหาที่เจอ ว่าเกิดจากอะไร และแก้ยังไง ชื่อนี้มาจากคำว่า flocculation คือการที่ยีสต์จับตัวกันเป็นก้อนแล้วตกตะกอนลงก้นถัง เบียร์จึงใส |
+| What we work on | สิ่งที่เราทำอยู่ |
+| Automation. | ระบบอัตโนมัติ |
+| Tools that take the slow, error-prone steps out of brewing. One is a dextrose dispenser, because measuring priming sugar by hand is fiddly. We're still building it. | เครื่องมือที่ทำแทนเราในขั้นตอนที่ช้าและพลาดง่ายตอนต้มเบียร์ หนึ่งในนั้นคือเครื่องจ่ายเดกซ์โทรส เพราะการตวงน้ำตาลไพรมิ่งด้วยมือเป็นงานจุกจิก ตัวนี้เรายังสร้างไม่เสร็จ |
+| Merch. | เมอร์ช |
+| A Floc Nation T-shirt for people who brew. It isn't available yet. | เสื้อยืด Floc Nation สำหรับคนต้มเบียร์ ตอนนี้ยังไม่พร้อม |
+| Brew days. | วันต้มเบียร์ |
+| A batch brewed from start to finish. This is where problems show up and fixes get tested. We share brew days online. They aren't open to visitors. | ต้มเบียร์หนึ่งแบตช์ตั้งแต่ต้นจนจบ เป็นวันที่ปัญหาโผล่ออกมา และได้ลองวิธีแก้ เราแชร์วันต้มเบียร์ทางออนไลน์ แต่ไม่ได้เปิดให้คนแวะมาดู |
+| Priming-sugar calculator | คำนวณน้ำตาลไพรมิ่ง |
+| Bottling soon? The priming-sugar calculator tells you how much sugar to add, for the whole batch and per bottle. | ถ้าใกล้จะบรรจุขวดแล้ว เครื่องคำนวณน้ำตาลไพรมิ่งจะบอกว่าต้องใส่น้ำตาลเท่าไร ทั้งแบตช์และต่อขวด |
+| Open the calculator | เปิดเครื่องคำนวณ |
+| Questions and fixes | คำถามและวิธีแก้ |
+| Brewing at home, in Bangkok or anywhere else? Bring your questions and your fixes to any of the accounts below. | ถ้าคุณก็ต้มเบียร์เอง ไม่ว่าจะในกรุงเทพฯ หรือที่ไหนก็ตาม มาถามหรือแชร์วิธีแก้ของคุณได้ทุกช่องทางด้านล่าง |
+| Follow along | ติดตามเรา |
+| Floc Nation is flocnationbrew on: | Floc Nation ใช้ชื่อ flocnationbrew ในทุกช่องทาง |
 
 ## Calculator page (`docs/th/calculator.html`)
 

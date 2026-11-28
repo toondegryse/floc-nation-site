@@ -875,9 +875,9 @@ describe('target exactly at the residual CO2 (T6 second run)', () => {
     { tempC: 40, residual: '0.7035408' },
   ];
 
-  // Parked under "Needs you" (T6 failed review twice). Drop the todo once the
-  // module counts a target at the residual as "no sugar needed".
-  test('a target typed as the exact PROJECT.md residual flags no sugar needed and gives 0 g (0, 20, 25, 30, 40 °C)', { todo: 'T6 parked: target exactly at the residual misses the no-sugar note (floating-point); waiting on Toon' }, () => {
+  // Was parked as a todo (T6 failed review twice). Toon approved the fix on
+  // 28 Nov: a target within 1e-9 volumes of the residual counts as at it.
+  test('a target typed as the exact PROJECT.md residual flags no sugar needed and gives 0 g (0, 20, 25, 30, 40 °C)', () => {
     const wrong = [];
     for (const { tempC, residual } of EXACT_RESIDUALS) {
       const result = calc({ tempC, targetVols: residual });
@@ -889,6 +889,35 @@ describe('target exactly at the residual CO2 (T6 second run)', () => {
       }
     }
     assert.deepEqual(wrong, [], `expected no sugar at the residual:\n${wrong.join('\n')}`);
+  });
+
+  // The tolerance only absorbs floating-point error. A target 0.001 volumes
+  // above the residual is a real result and still needs sugar.
+  test('a target 0.001 vols above the exact residual needs sugar and raises no no-sugar flag (0, 20, 25, 30, 40 °C)', () => {
+    // 0.001 vols × 20 L × 4.0 g = 0.08 g for the batch; × 0.33 ÷ 20 per 330 ml bottle.
+    const wrong = [];
+    for (const { tempC, residual } of EXACT_RESIDUALS) {
+      const targetVols = Number(residual) + 0.001;
+      const result = calc({ tempC, targetVols });
+      const ok =
+        result.noSugarNeeded === false &&
+        Math.abs(result.batchGrams - 0.08) <= 1e-9 &&
+        Math.abs(result.perBottleGrams - 0.00132) <= 1e-9;
+      if (!ok) {
+        wrong.push(
+          `${tempC} °C, target ${targetVols}: noSugarNeeded ${result.noSugarNeeded}, ` +
+            `batchGrams ${result.batchGrams}, perBottleGrams ${result.perBottleGrams}`,
+        );
+      }
+    }
+    assert.deepEqual(wrong, [], `expected sugar just above the residual:\n${wrong.join('\n')}`);
+  });
+
+  test('batchSugarGrams on its own agrees: 0 g at the exact residual, 0.08 g at 0.001 vols above it', () => {
+    for (const { tempC, residual } of EXACT_RESIDUALS) {
+      assert.equal(batchSugarGrams({ litres: 20, tempC, targetVols: residual }), 0, `${tempC} °C at the residual`);
+      assertNear(batchSugarGrams({ litres: 20, tempC, targetVols: Number(residual) + 0.001 }), 0.08, 1e-9);
+    }
   });
 });
 

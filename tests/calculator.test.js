@@ -648,14 +648,23 @@ describe('typed text in every text field (T6a second review)', () => {
 
 // Added by the tester in the T6 second run.
 describe('safety notes: more edge cases (T6 second run)', () => {
-  // Parked under "Needs you" (T6 failed review twice). Drop the todo once the
-  // module counts a target at the residual as "no sugar needed".
-  test('a target typed as the exact PROJECT.md residual (0.8614872 at 20 °C) shows the no-sugar note and 0.0 g', { todo: 'T6 parked: target exactly at the residual misses the no-sugar note (floating-point); waiting on Toon' }, () => {
+  // Was parked as a todo (T6 failed review twice). Toon approved the fix on
+  // 28 Nov: a target within 1e-9 volumes of the residual counts as at it.
+  test('a target typed as the exact PROJECT.md residual (0.8614872 at 20 °C) shows the no-sugar note and 0.0 g', () => {
     // 20 °C = 68 °F: 3.0378 − 0.050062 × 68 + 0.00026555 × 68² = 0.8614872 exactly.
     const v = view({ tempC: '20', targetVols: '0.8614872' });
     assert.deepEqual(v.notes, [NO_SUGAR_TEXT], `notes: ${JSON.stringify(v.notes)}, batch ${v.result?.batchGrams} g`);
+    assert.equal(v.result.batchGrams, 0);
     assert.equal(v.batchText, '0.0');
     assert.equal(v.perBottleText, '0.00');
+  });
+
+  test('a target 0.001 vols above the exact residual (0.8624872 at 20 °C) needs sugar and shows no note', () => {
+    // 0.001 vols × 20 L × 4.0 g = 0.08 g, shown as 0.1 g for the batch.
+    const v = view({ tempC: '20', targetVols: '0.8624872' });
+    assert.deepEqual(v.notes, [], `notes: ${JSON.stringify(v.notes)}`);
+    assert.ok(Math.abs(v.result.batchGrams - 0.08) <= 1e-9, `batch ${v.result.batchGrams} g`);
+    assert.equal(v.batchText, '0.1');
   });
 
   test('table sugar shows the same safety notes as dextrose', () => {
