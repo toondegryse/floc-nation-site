@@ -13,6 +13,7 @@
   - Tests: 721, 0 fail, 3 todo.
 - **Doing:** nothing, waiting on you. Next run: T22, small polish from the reviews (venture titles without full stops, the ExtraBold exception in the weight test, a quieter results area for screen readers, limit messages written the way the field accepts them).
 - **Needs you:**
+  - **The preview link is down (404).** GitHub reports Pages is switched off for the repo, and the repo is private. GitHub's free plan only publishes Pages from public repos. Either make the repo public again, or keep it private on GitHub Pro. Then turn Pages back on (Settings, Pages, branch `main`, folder `/docs`). G2 waits on this.
   - G2: try the calculator on your phone. The card has three things to try.
   - G-TH: ask your native speaker to read `THAI.md`. It now includes the home page and the new limit messages, with review points at the top.
   - Social: upload the cover, banner and bios (unchanged).
