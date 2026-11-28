@@ -10,6 +10,10 @@
  * names the input it is about, e.g. 'tempC', and its `code` says what is
  * wrong (see ERROR_CODES), so a page in another language can word it.
  *
+ * Every number input has an upper limit (MAX_LITRES, MAX_BOTTLE_ML,
+ * MAX_TARGET_VOLS, MAX_BATCH_GRAMS). The limits are generous, and they keep
+ * every result a plain, finite number: nothing can overflow.
+ *
  * Number inputs accept a number or the raw string from a form field.
  * Pass the raw string (input.value) so an empty field gets an
  * "Enter ..." message rather than "... must be a number."
@@ -33,6 +37,23 @@ export const DEFAULT_BOTTLE_ML = 330;
 /** Temperatures the residual CO2 formula accepts, in °C (inclusive). */
 export const TEMP_RANGE_C = Object.freeze({ min: 0, max: 40 });
 
+/** Largest beer volume the calculator takes, in litres (inclusive): a big commercial batch. */
+export const MAX_LITRES = 10000;
+
+/** Largest bottle size the calculator takes, in ml (inclusive): a 20 litre keg. */
+export const MAX_BOTTLE_ML = 20000;
+
+/** Highest target CO2 the calculator takes, in volumes (inclusive). Beer styles stay under 5. */
+export const MAX_TARGET_VOLS = 10;
+
+/**
+ * Most batch sugar gramsPerBottle() takes, in grams (inclusive): the bigger
+ * sugar factor × the highest target × the largest batch, so 4.0 × 10 × 10,000
+ * = 400,000 g. No batch within the limits needs more.
+ */
+export const MAX_BATCH_GRAMS =
+  Math.max(...Object.values(SUGAR_FACTORS)) * MAX_TARGET_VOLS * MAX_LITRES;
+
 /** Targets above this many volumes need bottles rated for high pressure. */
 export const HIGH_PRESSURE_VOLS = 3.0;
 
@@ -42,7 +63,7 @@ export const HIGH_PRESSURE_VOLS = 3.0;
  * residual about 1e-16 volumes off the exact decimal, so a target typed as
  * the exact residual could read as a hair above it. 1e-9 absorbs that with
  * room to spare and is far too small to matter: on 1,000 litres it is
- * under 0.00001 g of sugar.
+ * under 0.00001 g of sugar, and on the largest batch (MAX_LITRES) 0.00004 g.
  */
 const AT_RESIDUAL_VOLS = 1e-9;
 
@@ -70,12 +91,14 @@ export const STYLE_PRESETS = Object.freeze([
  *   not-number    not a plain decimal number
  *   not-positive  0 or less where more than 0 is needed
  *   out-of-range  temperature outside TEMP_RANGE_C
+ *   over-limit    more than the calculator takes (MAX_LITRES, MAX_BOTTLE_ML,
+ *                 MAX_TARGET_VOLS, MAX_BATCH_GRAMS)
  *   too-big       bottle bigger than the whole batch
  *   negative      batch sugar below 0 g
  *   unknown       sugar type that isn't in SUGAR_FACTORS
  */
 export const ERROR_CODES = Object.freeze([
-  'empty', 'not-number', 'not-positive', 'out-of-range', 'too-big', 'negative', 'unknown',
+  'empty', 'not-number', 'not-positive', 'out-of-range', 'over-limit', 'too-big', 'negative', 'unknown',
 ]);
 
 /** Error for input the calculator can't use. */
@@ -118,9 +141,9 @@ export function residualCO2(tempC) {
  * Returns 0, never a negative number, when the target is at or below
  * the residual CO2 (within AT_RESIDUAL_VOLS).
  * @param {object} inputs
- * @param {number|string} inputs.litres     Beer volume in litres, more than 0.
+ * @param {number|string} inputs.litres     Beer volume in litres, more than 0, at most MAX_LITRES.
  * @param {number|string} inputs.tempC      Highest temperature in °C, 0 to 40.
- * @param {number|string} inputs.targetVols Target CO2 in volumes, more than 0.
+ * @param {number|string} inputs.targetVols Target CO2 in volumes, more than 0, at most MAX_TARGET_VOLS.
  * @param {'dextrose'|'table'} [inputs.sugar='dextrose']
  * @returns {number} Grams of sugar for the batch.
  */
@@ -135,9 +158,9 @@ export function batchSugarGrams(inputs) {
 
 /**
  * Grams of priming sugar for one bottle.
- * @param {number|string} batchGrams   Grams for the whole batch, 0 or more.
- * @param {number|string} bottleLitres Bottle size in litres, more than 0.
- * @param {number|string} batchLitres  Beer volume in litres, at least one bottle.
+ * @param {number|string} batchGrams   Grams for the whole batch, 0 to MAX_BATCH_GRAMS.
+ * @param {number|string} bottleLitres Bottle size in litres, more than 0, at most MAX_BOTTLE_ML / 1000.
+ * @param {number|string} batchLitres  Beer volume in litres, at least one bottle, at most MAX_LITRES.
  * @returns {number} Grams of sugar per bottle.
  */
 export function gramsPerBottle(batchGrams, bottleLitres, batchLitres) {
@@ -145,6 +168,7 @@ export function gramsPerBottle(batchGrams, bottleLitres, batchLitres) {
   if (grams < 0) {
     throw new PrimingInputError("Batch sugar can't be less than 0 g.", 'batchGrams', 'negative');
   }
+  checkMax(grams, 'batchGrams');
   const bottle = readPositive(bottleLitres, 'bottleLitres');
   const batch = readPositive(batchLitres, 'batchLitres');
   if (bottle > batch) {
@@ -156,10 +180,10 @@ export function gramsPerBottle(batchGrams, bottleLitres, batchLitres) {
 /**
  * Everything the calculator page shows, in one call.
  * @param {object} inputs
- * @param {number|string} inputs.litres     Beer volume in litres, more than 0.
+ * @param {number|string} inputs.litres     Beer volume in litres, more than 0, at most MAX_LITRES.
  * @param {number|string} inputs.tempC      Highest temperature in °C, 0 to 40.
- * @param {number|string} inputs.targetVols Target CO2 in volumes, more than 0.
- * @param {number|string} [inputs.bottleMl=330] Bottle size in ml, no bigger than the batch.
+ * @param {number|string} inputs.targetVols Target CO2 in volumes, more than 0, at most MAX_TARGET_VOLS.
+ * @param {number|string} [inputs.bottleMl=330] Bottle size in ml, at most MAX_BOTTLE_ML and no bigger than the batch.
  * @param {'dextrose'|'table'} [inputs.sugar='dextrose']
  * @returns {{
  *   residual: number,
@@ -205,14 +229,16 @@ export function calculatePriming(inputs) {
 
 const BOTTLE_TOO_BIG = "Bottle size can't be bigger than the whole batch.";
 
+// max: the most the input takes (inclusive). The temperature has its own
+// range check, TEMP_RANGE_C.
 const INPUTS = {
-  litres: { name: 'Beer volume', unit: 'litres', enter: 'Enter the beer volume in litres.' },
-  batchLitres: { name: 'Beer volume', unit: 'litres', enter: 'Enter the beer volume in litres.' },
+  litres: { name: 'Beer volume', unit: 'litres', enter: 'Enter the beer volume in litres.', max: MAX_LITRES },
+  batchLitres: { name: 'Beer volume', unit: 'litres', enter: 'Enter the beer volume in litres.', max: MAX_LITRES },
   tempC: { name: 'Temperature', unit: '°C', enter: 'Enter the highest temperature the beer reached.' },
-  targetVols: { name: 'Target CO2', unit: 'volumes', enter: 'Enter a target CO2 level in volumes.' },
-  bottleMl: { name: 'Bottle size', unit: 'ml', enter: 'Enter the bottle size in ml.' },
-  bottleLitres: { name: 'Bottle size', unit: 'litres', enter: 'Enter the bottle size in litres.' },
-  batchGrams: { name: 'Batch sugar', unit: 'g', enter: 'Enter the batch sugar in grams.' },
+  targetVols: { name: 'Target CO2', unit: 'volumes', enter: 'Enter a target CO2 level in volumes.', max: MAX_TARGET_VOLS },
+  bottleMl: { name: 'Bottle size', unit: 'ml', enter: 'Enter the bottle size in ml.', max: MAX_BOTTLE_ML },
+  bottleLitres: { name: 'Bottle size', unit: 'litres', enter: 'Enter the bottle size in litres.', max: MAX_BOTTLE_ML / 1000 },
+  batchGrams: { name: 'Batch sugar', unit: 'g', enter: 'Enter the batch sugar in grams.', max: MAX_BATCH_GRAMS },
 };
 
 function stylePreset(id, name, min, max, defaultVols) {
@@ -259,7 +285,21 @@ function readPositive(value, field) {
     const { name, unit } = INPUTS[field];
     throw new PrimingInputError(`${name} must be more than 0 ${unit}.`, field, 'not-positive');
   }
+  return checkMax(n, field);
+}
+
+/** n as it is, or an 'over-limit' error when it is more than the input's max. */
+function checkMax(n, field) {
+  const { name, unit, max } = INPUTS[field];
+  if (n > max) {
+    throw new PrimingInputError(`${name} must be ${groupThousands(max)} ${unit} or less.`, field, 'over-limit');
+  }
   return n;
+}
+
+/** A whole number with a comma between each group of three digits: 10000 → '10,000'. */
+function groupThousands(n) {
+  return String(n).replace(/\B(?=(\d{3})+$)/g, ',');
 }
 
 function readTempC(value) {

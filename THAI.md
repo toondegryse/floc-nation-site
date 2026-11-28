@@ -17,6 +17,7 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 - Home page copy (T16), points from the review: the hero ต้มเบียร์เองในกรุงเทพฯ กับเครื่องมือที่ช่วยให้ต้มง่ายขึ้น: does กับ read as "brewing *with* tools" rather than "brewing, *and* the tools"? The Automation line (เครื่องมือที่ทำแทนเรา… and the เพราะ… sentence about the dispenser) may follow the English word order too closely. Brew days: และได้ลองวิธีแก้ has no subject. Spoken words (ยังไง, โผล่) sit next to written ones (จึง, เท่าไร): is the mix OK? เมอร์ช or เมิร์ช?
 - Words in {curly brackets} are filled in by the page (a number, a style name or a sugar name). Keep them as they are.
 - Error messages are listed by the field and problem they cover, e.g. (tempC.out-of-range).
+- Upper limits (T21): "must be 10,000 litres or less" is written ต้องไม่เกิน {max} ลิตร ("must not be more than"). The page fills in the figure with a comma, e.g. 10,000. OK?
 
 ## Home page (`docs/th/index.html`)
 
@@ -111,6 +112,7 @@ The approved home page text from `COPY.md`, with a Thai draft. It is on the prev
 | highest temperature | อุณหภูมิสูงสุด |
 | Fill in the {fields} to see how much sugar to add. | กรอก{fields} เพื่อดูว่าต้องใส่น้ำตาลเท่าไร |
 | Fix the marked fields to see the result. | แก้ช่องที่ทำเครื่องหมายไว้ เพื่อดูผลลัพธ์ |
+| The calculator can't work with these numbers. Check each field. | เครื่องคำนวณใช้ตัวเลขชุดนี้ไม่ได้ ลองตรวจดูแต่ละช่องอีกครั้ง |
 | ,  |   |
 |  and  |  และ |
 | {sugar} for the whole batch | {sugar}สำหรับทั้งแบตช์ |
@@ -135,15 +137,18 @@ The approved home page text from `COPY.md`, with a Thai draft. It is on the prev
 | (litres.empty) | ใส่ปริมาณเบียร์เป็นลิตร |
 | (litres.not-number) | ปริมาณเบียร์ต้องเป็นตัวเลข |
 | (litres.not-positive) | ปริมาณเบียร์ต้องมากกว่า 0 ลิตร |
+| (litres.over-limit) | ปริมาณเบียร์ต้องไม่เกิน {max} ลิตร |
 | (tempC.empty) | ใส่อุณหภูมิสูงสุดที่เบียร์เคยขึ้นถึง |
 | (tempC.not-number) | อุณหภูมิต้องเป็นตัวเลข |
 | (tempC.out-of-range) | อุณหภูมิต้องอยู่ระหว่าง {min} ถึง {max} °C |
 | (targetVols.empty) | ใส่ระดับ CO2 ที่ต้องการ เป็นวอลุ่ม |
 | (targetVols.not-number) | CO2 เป้าหมายต้องเป็นตัวเลข |
 | (targetVols.not-positive) | CO2 เป้าหมายต้องมากกว่า 0 วอลุ่ม |
+| (targetVols.over-limit) | CO2 เป้าหมายต้องไม่เกิน {max} วอลุ่ม |
 | (bottleMl.empty) | ใส่ขนาดขวดเป็นมิลลิลิตร |
 | (bottleMl.not-number) | ขนาดขวดต้องเป็นตัวเลข |
 | (bottleMl.not-positive) | ขนาดขวดต้องมากกว่า 0 มล. |
+| (bottleMl.over-limit) | ขนาดขวดต้องไม่เกิน {max} มล. |
 | (bottleMl.too-big) | ขนาดขวดต้องไม่ใหญ่กว่าปริมาณเบียร์ทั้งหมด |
 | (sugar.unknown) | เลือกเดกซ์โทรสหรือน้ำตาลทราย |
 | (any other input problem) | ค่านี้ใช้ไม่ได้ ลองตรวจดูอีกครั้ง |

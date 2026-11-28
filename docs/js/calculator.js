@@ -22,6 +22,9 @@ import {
   BOTTLE_SIZES_ML,
   DEFAULT_BOTTLE_ML,
   HIGH_PRESSURE_VOLS,
+  MAX_BOTTLE_ML,
+  MAX_LITRES,
+  MAX_TARGET_VOLS,
   TEMP_RANGE_C,
 } from './priming.js';
 import { guideForStyle } from './styles.js';
@@ -62,15 +65,31 @@ const ERROR_FIELDS = Object.freeze(['litres', 'bottleSize', 'customBottleMl', 't
 
 /**
  * Stand-in values used while checking the other fields, so each bad field
- * gets its own message. The batch is huge so no bottle can be bigger.
+ * gets its own message. The batch is the largest the calculator takes, so
+ * no bottle the calculator takes can be bigger.
  */
 const STAND_INS = Object.freeze({
-  litres: 1e6,
+  litres: MAX_LITRES,
   tempC: (TEMP_RANGE_C.min + TEMP_RANGE_C.max) / 2,
   targetVols: 2.4,
   bottleMl: DEFAULT_BOTTLE_ML,
   sugar: 'dextrose',
 });
+
+/** The {min} and {max} in each field's Thai range and limit messages. */
+const FIELD_LIMITS = Object.freeze({
+  tempC: TEMP_RANGE_C,
+  litres: Object.freeze({ max: MAX_LITRES }),
+  targetVols: Object.freeze({ max: MAX_TARGET_VOLS }),
+  bottleMl: Object.freeze({ max: MAX_BOTTLE_ML }),
+});
+
+/**
+ * toFixed() writes numbers of 1e21 and up in exponent form ("1e+21"), so a
+ * figure on the page must be finite and below this. The limits in
+ * priming.js keep every figure far below it (under 400,000 g).
+ */
+const PLAIN_FIGURE_LIMIT = 1e21;
 
 // ---------------------------------------------------------------------------
 // Pure part
@@ -128,13 +147,18 @@ export function styleGuideView(styleId, lang = 'en') {
  * @param {PrimingInputError} err From priming.js.
  * @param {'en'|'th'} [lang='en']
  * @returns {string} English: the module's own message. Thai: the Thai
- *   message for the error's field and code.
+ *   message for the error's field and code, with the field's limits filled in.
  */
 export function errorMessage(err, lang = 'en') {
   if (lang !== 'th') return err.message;
   const t = textFor('th');
   const template = ownValue(t.errors, `${err.field}.${err.code}`) ?? t.errorFallback;
-  return fill(template, { min: TEMP_RANGE_C.min, max: TEMP_RANGE_C.max });
+  const limits = ownValue(FIELD_LIMITS, err.field) ?? {};
+  const values = {};
+  for (const key of ['min', 'max']) {
+    if (typeof limits[key] === 'number') values[key] = groupThousands(limits[key]);
+  }
+  return fill(template, values);
 }
 
 /**
@@ -183,11 +207,14 @@ export function styleName(styleId, lang = 'en') {
  *   result: object|null
  * }}
  *   batchText is grams to 1 decimal and perBottleText grams to 2 decimals,
- *   without the unit. Both are '' when there is no result.
+ *   without the unit. Both are '' when there is no result, and never
+ *   Infinity, NaN or in exponent form.
  *   notes holds the safety notes to show, word for word.
  *   errors maps a field (litres, bottleSize, customBottleMl, targetVols,
  *   tempC, sugar) to the message shown next to it.
- *   prompt is the line shown in the results area when there is no result.
+ *   prompt is the line shown in the results area when there is no result:
+ *   fix the marked fields, fill in the missing ones, or (with nothing to
+ *   mark) check the numbers.
  *   styleGuide is styleGuideView() for the picked style: the lines shown
  *   under the style menu, or null (no guide shown) for an unknown style id.
  *   result is what calculatePriming() returned, or null.
@@ -224,10 +251,15 @@ export function computeView(raw = {}, options = {}) {
   let prompt = '';
   if (!result) {
     const missing = TEXT_FIELDS.filter((key) => waiting.includes(key));
-    prompt =
-      Object.keys(errors).length === 0 && missing.length > 0
-        ? fill(t.promptFill, { fields: joinList(missing.map((key) => t.fieldNames[key]), t) })
-        : t.promptFix;
+    if (Object.keys(errors).length > 0) {
+      prompt = t.promptFix;
+    } else if (missing.length > 0) {
+      prompt = fill(t.promptFill, { fields: joinList(missing.map((key) => t.fieldNames[key]), t) });
+    } else {
+      // No field to mark and none to fill in, yet no result: the module
+      // could not work with the numbers (see runCalculator).
+      prompt = t.promptCheck;
+    }
   }
 
   const sugarName = ownValue(t.sugarNames, values.sugar) ?? t.sugarFallback;
@@ -239,7 +271,7 @@ export function computeView(raw = {}, options = {}) {
     hasResult: result !== null,
     batchLabel: fill(t.batchLabel, { sugar: sugarName }),
     batchText: result ? fixed(result.batchGrams, 1) : '',
-    perBottleLabel: result ? fill(t.perBottleLabel, { sugar: sugarName, ml: String(Number(bottleMl)) }) : '',
+    perBottleLabel: result ? fill(t.perBottleLabel, { sugar: sugarName, ml: plainNumber(Number(bottleMl)) }) : '',
     perBottleText: result ? fixed(result.perBottleGrams, 2) : '',
     residualText: result ? fill(t.residual, { vols: fixed(result.residual, 2) }) : '',
     notes,
@@ -256,6 +288,11 @@ export function computeView(raw = {}, options = {}) {
  * Runs calculatePriming() and collects one error per bad field. The module
  * stops at the first bad field, so each bad field is swapped for a stand-in
  * and the call is tried again.
+ *
+ * The result is null unless every field is good and every figure can be
+ * shown as plain digits. An input error about a value that is not a page
+ * field (the bottle in litres, the batch sugar) ends the run with no result
+ * instead of throwing, so the page never keeps old figures.
  */
 function runCalculator(inputs) {
   const trial = { ...inputs };
@@ -263,9 +300,12 @@ function runCalculator(inputs) {
   for (let i = 0; i <= Object.keys(STAND_INS).length; i += 1) {
     try {
       const result = calculatePriming(trial);
-      return { result: Object.keys(fieldErrors).length === 0 ? result : null, fieldErrors };
+      const usable = Object.keys(fieldErrors).length === 0 && hasPlainFigures(result);
+      return { result: usable ? result : null, fieldErrors };
     } catch (err) {
-      if (!(err instanceof PrimingInputError) || !hasOwn(STAND_INS, err.field)) throw err;
+      if (!(err instanceof PrimingInputError)) throw err; // a bug, not bad input
+      // Not a page field: there is nothing to mark, so stop with no result.
+      if (!hasOwn(STAND_INS, err.field)) break;
       // A stand-in clashed with another field (a bottle bigger than a tiny
       // batch). The field already has its own message, so stop here.
       if (hasOwn(fieldErrors, err.field)) break;
@@ -274,6 +314,13 @@ function runCalculator(inputs) {
     }
   }
   return { result: null, fieldErrors };
+}
+
+/** True when every figure the page shows is finite and below PLAIN_FIGURE_LIMIT. */
+function hasPlainFigures(result) {
+  return [result.batchGrams, result.perBottleGrams, result.residual].every(
+    (n) => Number.isFinite(n) && Math.abs(n) < PLAIN_FIGURE_LIMIT,
+  );
 }
 
 function targetHint(styleId, targetRaw, targetIsValid, lang) {
@@ -322,6 +369,22 @@ function formatVols(vols) {
 /** Rounds for display. Adding 0 turns -0 into 0. */
 function fixed(n, digits) {
   return (n + 0).toFixed(digits);
+}
+
+/**
+ * A number as plain decimal text, never in exponent form. String() writes
+ * numbers under 0.000001 as e.g. '1e-7'; this writes '0.0000001'. (String()
+ * also uses exponents from 1e21 up, but MAX_BOTTLE_ML keeps bottle sizes far
+ * below that.)
+ */
+function plainNumber(n) {
+  const m = /^(\d)(?:\.(\d+))?e-(\d+)$/.exec(String(n));
+  return m ? `0.${'0'.repeat(Number(m[3]) - 1)}${m[1]}${m[2] ?? ''}` : String(n);
+}
+
+/** A whole number with a comma between each group of three digits: 10000 → '10,000'. */
+function groupThousands(n) {
+  return String(n).replace(/\B(?=(\d{3})+$)/g, ',');
 }
 
 function isEmpty(value) {
@@ -481,7 +544,20 @@ function initPage(doc) {
     }
   };
 
-  const render = () => paint(computeView(readValues(), { touched, lang }));
+  // Last resort for a bug: hide the figures and notes rather than leave old
+  // ones on screen, then let the error through so the browser logs it.
+  const render = () => {
+    try {
+      paint(computeView(readValues(), { touched, lang }));
+    } catch (err) {
+      setHidden(out.values, true);
+      setHidden(out.noteHighPressure, true);
+      setHidden(out.noteNoSugar, true);
+      setText(out.prompt, t.promptCheck);
+      setHidden(out.prompt, false);
+      throw err;
+    }
+  };
 
   for (const key of TEXT_FIELDS) {
     const markAndRender = () => {
