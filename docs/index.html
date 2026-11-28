@@ -7,7 +7,7 @@
 <!-- Google Fonts entries in style-src and font-src are for the preview only. Remove them once Manrope and Noto Sans Thai are self-hosted (before gate G3). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>Floc Nation · Brewed and built in Bangkok</title>
-<meta name="description" content="Floc Nation is home brewing in Bangkok: the brewing, the automations built for it, and the community around it.">
+<meta name="description" content="Floc Nation brews beer at home in Bangkok and builds its own tools along the way.">
 <meta name="theme-color" content="#FDFDFD">
 <link rel="alternate" hreflang="en" href="./">
 <link rel="alternate" hreflang="th" href="th/">
@@ -33,15 +33,51 @@
 
 <main id="main" class="site-main">
   <div class="container">
-    <h1>Brewed and built in Bangkok.</h1>
-    <p class="lead">Site coming soon.</p>
+    <h1 class="hero">Home brewing in Bangkok, and the tools that make it easier.</h1>
+
+    <section class="section" aria-labelledby="about-heading">
+      <h2 id="about-heading">About Floc Nation</h2>
+      <p>Floc Nation brews beer at home in Bangkok and builds its own tools along the way. We share what goes wrong, why, and how it gets fixed. The name comes from flocculation: yeast clumping together and dropping out, so the beer clears.</p>
+    </section>
+
+    <section class="section" aria-labelledby="work-heading">
+      <h2 id="work-heading">What we work on</h2>
+      <ul class="ventures">
+        <li class="card card--accent">
+          <h3 class="card__title">Automation.</h3>
+          <p>Tools that take the slow, error-prone steps out of brewing. One is a dextrose dispenser, because measuring priming sugar by hand is fiddly. We're still building it.</p>
+        </li>
+        <li class="card card--accent">
+          <h3 class="card__title">Merch.</h3>
+          <p>A Floc Nation T-shirt for people who brew. It isn't available yet.</p>
+        </li>
+        <li class="card card--accent">
+          <h3 class="card__title">Brew days.</h3>
+          <p>A batch brewed from start to finish. This is where problems show up and fixes get tested. We share brew days online. They aren't open to visitors.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="calculator-heading">
+      <h2 id="calculator-heading">Priming-sugar calculator</h2>
+      <p>Bottling soon? The priming-sugar calculator tells you how much sugar to add, for the whole batch and per bottle.</p>
+      <p><a class="button" href="calculator.html">Open the calculator</a></p>
+    </section>
+
+    <section class="section" aria-labelledby="community-heading">
+      <h2 id="community-heading">Questions and fixes</h2>
+      <p>Brewing at home, in Bangkok or anywhere else? Bring your questions and your fixes to any of the accounts below.</p>
+    </section>
   </div>
 </main>
 
+<!-- On the home page the footer holds the "Follow along" section (COPY.md,
+     section 6), so the four links show once. The calculator pages keep the
+     short footer: tagline, "Find us as flocnationbrew on" and the links. -->
 <footer class="site-footer">
   <div class="container">
-    <p class="site-footer__tagline">Brewed and built in Bangkok</p>
-    <p class="site-footer__label" id="social-label">Find us as flocnationbrew on</p>
+    <h2 class="site-footer__heading">Follow along</h2>
+    <p class="site-footer__label" id="social-label">Floc Nation is <strong>flocnationbrew</strong> on:</p>
     <nav aria-labelledby="social-label">
       <ul class="social-links">
         <li><a href="https://www.instagram.com/flocnationbrew/">Instagram</a></li>
@@ -50,6 +86,7 @@
         <li><a href="https://www.facebook.com/flocnationbrew">Facebook</a></li>
       </ul>
     </nav>
+    <p class="site-footer__tagline">Brewed and built in Bangkok</p>
   </div>
 </footer>
 </body>

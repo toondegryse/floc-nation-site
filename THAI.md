@@ -25,13 +25,10 @@ Every Thai string on the site, next to its English one. Toon's native-speaker co
 | Floc Nation, home | Floc Nation หน้าแรก |
 | Main | เมนูหลัก |
 | Brewed and built in Bangkok | ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ |
-| Find us as flocnationbrew on | ติดตามเราในชื่อ flocnationbrew ได้ที่ |
 | Floc Nation · Brewed and built in Bangkok | Floc Nation · ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ |
-| Floc Nation is home brewing in Bangkok: the brewing, the automations built for it, and the community around it. | Floc Nation คือการต้มเบียร์เองในกรุงเทพฯ ทั้งการต้มเบียร์ เครื่องมืออัตโนมัติที่สร้างขึ้นมาช่วย และคอมมูนิตี้คนต้มเบียร์ |
+| Floc Nation brews beer at home in Bangkok and builds its own tools along the way. | Floc Nation ต้มเบียร์ที่บ้านในกรุงเทพฯ และสร้างเครื่องมือเองไปด้วย |
 | Home | หน้าแรก |
 | Priming calculator | คำนวณน้ำตาลไพรมิ่ง |
-| Brewed and built in Bangkok. | ต้มเบียร์และสร้างเครื่องมือเองในกรุงเทพฯ |
-| Site coming soon. | เว็บไซต์จะเปิดเร็วๆ นี้ |
 
 ## Home page copy (T16, draft)
 

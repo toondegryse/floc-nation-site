@@ -571,7 +571,7 @@ const bodyTexts = (html) =>
 
 const THAI_CHAR = /[\u0E00-\u0E7F]/;
 // Words that stay as they are on a Thai page.
-const KEEP_AS_IS = new Set(['Floc Nation', 'English', 'Instagram', 'YouTube', 'TikTok', 'Facebook', ':', '°C']);
+const KEEP_AS_IS = new Set(['Floc Nation', 'flocnationbrew', 'English', 'Instagram', 'YouTube', 'TikTok', 'Facebook', ':', '°C']);
 
 for (const page of pages.filter((p) => p.startsWith('th/'))) {
   const html = read(join(DOCS, page));
