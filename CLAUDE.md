@@ -26,7 +26,7 @@ The site must match the identity already used on the social channels: the "three
   - Pale blue `#EEF4F8`: cards and panels on the white page
   - Line `#D5DEE6`: borders and dividers (decoration only)
   - Muted text `#4F5B6B`: secondary text on white or pale blue
-- Type: Manrope for Latin text. ExtraBold (800) for headlines; 500 and 600 for everything else. Thai text uses Noto Sans Thai at the same weights (Manrope has no Thai letters). The badge lettering is artwork, not a font.
+- Type: Manrope for Latin text. ExtraBold (800) for headlines; 500 and 600 for everything else. Two exceptions also use 800 (Toon, Sat 28 Nov): the calculator's result figures and the footer tagline. Thai text uses Noto Sans Thai at the same weights (Manrope has no Thai letters). The badge lettering is artwork, not a font.
 - Tagline: "Brewed and built in Bangkok".
 - Look: professional and calm, like the badge. Not playful, not kid-like.
 - Voice: practical and plain. Talk about real brewing problems and how they get fixed. Short sentences. No hype words.

@@ -1,5 +1,30 @@
 # Status
 
+## Sat 28 Nov 2026 · Day 8 · PM run, with Toon
+- **Done:**
+  - G1 approved in a chat: hero A, the venture names stay as they are for now, and the three builder-picked headings stay.
+  - T6: a CO2 target exactly at the CO2 already in the beer now shows "No sugar needed" and 0 g. Tester and security pass.
+  - T16: the Thai home page copy is in `COPY.md` and `THAI.md`.
+  - T5: the home page is built in English and Thai from the approved copy. Tester and security pass.
+  - T7: phone and accessibility check of all four pages at 360 and 320 px (labels, AA contrast, keyboard only). Pass.
+  - T8: security and privacy review of the whole site. Pass for the preview; the go-live list is under Risks.
+  - T21: the calculator has upper limits (10,000 litres, 20,000 ml bottle, 10 volumes) with a clear message on the field, so huge numbers can't break the page. Tester and security pass.
+  - T9: G2 raised. Your other answers today: keep the 20 L keg limit; the result figures and footer tagline stay ExtraBold (noted in `CLAUDE.md`); drop the full stops on the venture titles.
+  - Tests: 721, 0 fail, 3 todo.
+- **Doing:** nothing, waiting on you. Next run: T22, small polish from the reviews (venture titles without full stops, the ExtraBold exception in the weight test, a quieter results area for screen readers, limit messages written the way the field accepts them).
+- **Needs you:**
+  - G2: try the calculator on your phone. The card has three things to try.
+  - G-TH: ask your native speaker to read `THAI.md`. It now includes the home page and the new limit messages, with review points at the top.
+  - Social: upload the cover, banner and bios (unchanged).
+  - Before go-live (T10): the fonts (add the files to `docs/fonts/`, or allow downloads in the network settings for Claude's cloud runs), and whether to go live on your own domain. The preview address shows your GitHub username.
+- **Try it:** https://toondegryse.github.io/floc-nation-site/ is the new home page; tap ไทย for the Thai draft. For the calculator, follow the G2 card.
+- **Risks:**
+  - The fonts still load from Google Fonts, so every visit sends the visitor's IP address to Google. They must be self-hosted before G3, and the cloud runs can't download them.
+  - At go-live the hreflang links become full addresses. On the github.io address, they would put your GitHub username in the page metadata.
+  - Not checked here: widths with the real Manrope and Noto Sans Thai, a real screen reader, Safari, and a real phone. G2 covers your phone.
+  - The Thai hero breaks เครื่องมือ across two lines on phones (fallback font). It's on the list for the Thai check.
+  - This run's checkout started on a detached commit, so its first push sent nothing. It was fixed by moving the work onto `main`. All of today's work is on GitHub.
+
 ## Mon 23 Nov 2026 · Day 3
 - **Done:**
   - T19: your Sat 21 Nov answers are in `COPY.md`: "we" throughout, Merch is a Floc Nation T-shirt (not available yet), brew days are shared online, the dextrose dispenser is still being built, and the Facebook link is confirmed. Links follow the footer order. `THAI.md` records "keep วอลุ่ม".

@@ -1215,6 +1215,22 @@ describe('upper limits (T21)', () => {
   });
 });
 
+describe('upper limits typed in other forms (T21, tester)', () => {
+  test('each limit typed with a trailing ".0" or as an exponent is allowed and gives the same figures as the plain number', () => {
+    const cases = [
+      { field: 'litres', at: 10000, texts: ['10000.0', '1e4', '1E4', '0.1e5', '+10000', ' 10000 '] },
+      { field: 'bottleMl', at: 20000, texts: ['20000.0', '2e4', '2E4', '0.2e5', '+20000', ' 20000 '], litres: 100 },
+      { field: 'targetVols', at: 10, texts: ['10.0', '1e1', '1E1', '100e-1', '+10', ' 10 '] },
+    ];
+    for (const { field, at, texts, litres = 20 } of cases) {
+      const expected = calc({ litres, [field]: at });
+      for (const text of texts) {
+        assert.deepEqual(calc({ litres, [field]: text }), expected, `${field}: "${text}"`);
+      }
+    }
+  });
+});
+
 describe('module purity', () => {
   // Source with comments removed, so the doc comments don't trigger matches.
   const source = readFileSync(new URL('../docs/js/priming.js', import.meta.url), 'utf8')

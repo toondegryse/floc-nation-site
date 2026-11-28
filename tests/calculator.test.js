@@ -1616,3 +1616,110 @@ describe('page wiring: upper limits and errors that are not page fields (stand-i
     assert.equal(page.text('result-prompt'), PROMPT_CHECK);
   });
 });
+
+// ==========================================================================
+// Added by the tester for T21
+// ==========================================================================
+
+/** Sets each field in limit.at on the page, picking Custom size first if needed. */
+function typeLimitValues(page, values) {
+  if (values.bottleSize) page.pick('bottle-size', values.bottleSize);
+  for (const [key, value] of Object.entries(values)) {
+    if (INPUT_IDS[key]) page.type(INPUT_IDS[key], value);
+  }
+}
+
+describe('upper limits on the page, more checks (stand-in DOM, T21 tester)', () => {
+  test('Thai page: typing each over-limit value hides the figures and notes and shows that field\'s Thai limit message', async () => {
+    for (const limit of LIMITS) {
+      const page = await openPage(CALCULATOR_TH_HTML);
+      page.type('litres', '20');
+      page.type('temp-c', '20');
+      page.type('target-vols', '2.4');
+      typeLimitValues(page, limit.at);
+      assert.ok(page.shown('result-values'), `${limit.name}: figures shown at the limit`);
+      const id = INPUT_IDS[limit.field];
+      page.type(id, limit.over[0][limit.field]);
+      assert.ok(!page.shown('result-values'), `${limit.name}: figures hidden just over the limit`);
+      assert.ok(page.shown(`${id}-error`), `${limit.name}: error shown`);
+      assert.equal(page.text(`${id}-error`), limit.th);
+      assert.equal(page.el(id).getAttribute('aria-invalid'), 'true');
+      assert.equal(page.text('result-prompt'), TH_PROMPT_FIX);
+      assert.ok(!page.shown('note-high-pressure') && !page.shown('note-no-sugar'), `${limit.name}: no notes`);
+    }
+  });
+
+  test('bringing an over-limit value back to the limit clears the message and shows the same figures again', async () => {
+    for (const limit of LIMITS) {
+      const page = await openWithCase(REFERENCE_CASES[0]);
+      typeLimitValues(page, limit.at);
+      const before = [page.text('batch-grams'), page.text('per-bottle-grams')];
+      const id = INPUT_IDS[limit.field];
+      page.type(id, limit.over[0][limit.field]);
+      assert.ok(page.shown(`${id}-error`), `${limit.name}: error shown over the limit`);
+      page.type(id, limit.at[limit.field]);
+      assert.ok(!page.shown(`${id}-error`), `${limit.name}: error hidden again`);
+      assert.equal(page.el(id).getAttribute('aria-invalid'), null, `${limit.name}: aria-invalid removed`);
+      assert.ok(page.shown('result-values'), `${limit.name}: figures back`);
+      assert.ok(!page.shown('result-prompt'), `${limit.name}: prompt hidden`);
+      assert.deepEqual([page.text('batch-grams'), page.text('per-bottle-grams')], before, `${limit.name}: same figures`);
+    }
+  });
+});
+
+describe('random input never shows Infinity, NaN or an exponent (T21 tester)', () => {
+  // A fixed-seed random mix of plain, huge, tiny and bad text in every field,
+  // with both sugars, every bottle option and three styles. Fixed seed, so a
+  // failure always comes back the same way.
+  function* randomViews(count) {
+    let seed = 20261128;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const pick = (list) => list[Math.floor(rnd() * list.length)];
+    const odd = ['', ' ', '0', '-0', '-1', 'abc', '1e309', 'Infinity', 'NaN', '0x14', '5e-324', '1e-322', '1e-320', '2.5e-10',
+      '10000', '10000.01', '20000', '20000.01', '10', '10.01', '1e4', '2e4', '1e1'];
+    const num = () => {
+      const r = rnd();
+      if (r < 0.2) return pick(odd);
+      if (r < 0.6) return `${(rnd() * 10).toFixed(3)}e${Math.floor(rnd() * 700) - 350}`;
+      return String(rnd() * 10 ** (Math.floor(rnd() * 8) - 2));
+    };
+    for (let i = 0; i < count; i += 1) {
+      yield {
+        litres: num(),
+        bottleSize: pick([...PAGE_BOTTLE_SIZES, CUSTOM_BOTTLE, CUSTOM_BOTTLE]),
+        customBottleMl: num(),
+        style: pick(['american-ale-ipa', 'wheat', 'custom']),
+        targetVols: num(),
+        tempC: pick([num(), '0', '20', '34.6', '40', (rnd() * 40).toFixed(2)]),
+        sugar: pick(['dextrose', 'table']),
+      };
+    }
+  }
+
+  test('5,000 random field sets in English and Thai: no throw, plain figures that match calculatePriming, or no figures and a prompt', () => {
+    const wrong = [];
+    for (const raw of randomViews(5000)) {
+      for (const lang of ['en', 'th']) {
+        let v;
+        try {
+          v = computeView(raw, { lang });
+        } catch (err) {
+          wrong.push(`${lang} ${JSON.stringify(raw)}: threw ${err.name}: ${err.message}`);
+          continue;
+        }
+        const shown = [v.batchText, v.perBottleText, v.residualText, v.perBottleLabel, v.batchLabel, v.prompt, v.targetHint, ...v.notes, ...Object.values(v.errors)];
+        if (shown.some((s) => NOT_PLAIN.test(s))) wrong.push(`${lang} ${JSON.stringify(raw)}: ${JSON.stringify(shown)}`);
+        if (v.hasResult) {
+          const bottleMl = raw.bottleSize === CUSTOM_BOTTLE ? raw.customBottleMl : raw.bottleSize;
+          const expected = calculatePriming({ litres: raw.litres, tempC: raw.tempC, targetVols: raw.targetVols, bottleMl, sugar: raw.sugar });
+          if (v.batchText !== expected.batchGrams.toFixed(1) || v.perBottleText !== expected.perBottleGrams.toFixed(2) || v.prompt !== '') {
+            wrong.push(`${lang} ${JSON.stringify(raw)}: shows ${v.batchText} / ${v.perBottleText}, module ${expected.batchGrams} / ${expected.perBottleGrams}`);
+          }
+        } else if (v.prompt === '' || v.batchText !== '' || v.perBottleText !== '' || v.notes.length > 0) {
+          wrong.push(`${lang} ${JSON.stringify(raw)}: no result but prompt "${v.prompt}", figures "${v.batchText}" "${v.perBottleText}", notes ${v.notes}`);
+        }
+      }
+    }
+    assert.deepEqual(wrong.slice(0, 10), []);
+  });
+});
