@@ -5,7 +5,12 @@ import { readFileSync } from 'node:fs';
 import {
   BOTTLE_SIZES_ML,
   DEFAULT_BOTTLE_ML,
+  ERROR_CODES,
   HIGH_PRESSURE_VOLS,
+  MAX_BATCH_GRAMS,
+  MAX_BOTTLE_ML,
+  MAX_LITRES,
+  MAX_TARGET_VOLS,
   PrimingInputError,
   STYLE_PRESETS,
   SUGAR_FACTORS,
@@ -498,8 +503,9 @@ describe('plain decimal text only', () => {
   ];
 
   // Every text below is 20 to Number(), and 20 is a valid value in every
-  // field (20 L, 20 °C, 20 volumes, a 20 ml bottle). So only the decimal
-  // text check can stop them.
+  // field but one (20 L, 20 °C, a 20 ml bottle). So only the decimal text
+  // check can stop them. 20 volumes is over MAX_TARGET_VOLS (T21), so there
+  // a missing decimal check would show as the limit message, not this one.
   const HEX = ['0x14', '0X14'];
   const BINARY = ['0b10100', '0B10100'];
   const OCTAL = ['0o24', '0O24'];
@@ -552,8 +558,11 @@ describe('plain decimal text only', () => {
       ['020', 20],
       ['.5', 0.5],
     ];
+    // Since T21 the target CO2 takes at most 10 volumes, so it gets the
+    // same texts for 2 volumes.
+    const targetTexts = [[' 2 ', 2], ['2e0', 2], ['2E0', 2], ['20e-1', 2], ['+2', 2], ['2.', 2], ['02', 2], ['.5', 0.5]];
     for (const { field } of NUMBER_FIELDS) {
-      for (const [text, n] of texts) {
+      for (const [text, n] of field === 'targetVols' ? targetTexts : texts) {
         assert.deepEqual(calc({ [field]: text }), calc({ [field]: n }), `${field}: "${text}"`);
       }
     }
@@ -686,8 +695,12 @@ describe('plain decimal text only (T6a second review, signed and hostile text)',
 
   test('still accepts a point and an exponent together ("2.e1", ".2e2", "2.0E+1") in every field', () => {
     for (const { field } of FIELDS) {
-      for (const text of ['2.e1', '.2e2', '2.0E+1', '20.0e0', '+2.e+1']) {
-        assert.deepEqual(calc({ [field]: text }), calc({ [field]: 20 }), `${field}: "${text}"`);
+      // Since T21 the target CO2 takes at most 10 volumes: it gets the same shapes for 2.
+      const [texts, n] = field === 'targetVols'
+        ? [['2.e0', '.2e1', '2.0E+0', '20.0e-1', '+2.e+0'], 2]
+        : [['2.e1', '.2e2', '2.0E+1', '20.0e0', '+2.e+1'], 20];
+      for (const text of texts) {
+        assert.deepEqual(calc({ [field]: text }), calc({ [field]: n }), `${field}: "${text}"`);
       }
     }
   });
@@ -992,13 +1005,14 @@ describe('target at, just above and well around the residual CO2 (T6 final run)'
     assertNear(result.batchGrams, 0.004, 1e-9);
   });
 
-  test('a "no sugar needed" result never hides 0.05 g or more of sugar, for batches up to 1,000,000 litres', () => {
+  // Was up to 1,000,000 litres until T21 set the largest batch at MAX_LITRES.
+  test('a "no sugar needed" result never hides 0.05 g or more of sugar, for batches up to the largest (10,000 litres)', () => {
     // 0.05 g is half the last digit the page shows for the batch (0.1 g).
     // Targets step through the residual 0.0000000001 vols at a time, from
     // 0.000000005 below it to 0.000000005 above it. The sugar the formula asks
     // for is worked from the exact decimal step, not from priming.js.
     const wrong = [];
-    for (const litres of [20, 1000, 1000000]) {
+    for (const litres of [20, 1000, MAX_LITRES]) {
       for (const tenthsC of [0, 200, 250, 300, 400]) {
         for (let step = -50; step <= 50; step += 1) {
           const targetVols = exactResidualText(tenthsC, BigInt(step) * 100n);
@@ -1019,12 +1033,13 @@ describe('target at, just above and well around the residual CO2 (T6 final run)'
 
 describe('grams are never negative (T6 final run)', () => {
   // 0 to 40 °C every 1 °C, targets 0.01 to 6.00 vols every 0.01, both sugars,
-  // one bottle's worth up to a million litres.
+  // one bottle's worth up to the largest batch (MAX_LITRES; it was a million
+  // litres until T21 set the limit).
   function* sweep() {
     for (let tempC = 0; tempC <= 40; tempC += 1) {
       for (let hundredths = 1; hundredths <= 600; hundredths += 1) {
         for (const sugar of ['dextrose', 'table']) {
-          for (const litres of [0.33, 20, 1000, 1000000]) {
+          for (const litres of [0.33, 20, 1000, MAX_LITRES]) {
             yield { litres, tempC, targetVols: hundredths / 100, sugar, bottleMl: 330 };
           }
         }
@@ -1032,7 +1047,7 @@ describe('grams are never negative (T6 final run)', () => {
     }
   }
 
-  test('batch and per-bottle grams are never negative or -0 (0–40 °C, 0.01–6.00 vols, both sugars, 0.33 L to 1,000,000 L)', () => {
+  test('batch and per-bottle grams are never negative or -0 (0–40 °C, 0.01–6.00 vols, both sugars, 0.33 L to 10,000 L)', () => {
     const wrong = [];
     for (const inputs of sweep()) {
       const { batchGrams, perBottleGrams } = calculatePriming(inputs);
@@ -1050,6 +1065,153 @@ describe('grams are never negative (T6 final run)', () => {
       if (noSugarNeeded !== (batchGrams === 0)) wrong.push(`${JSON.stringify(inputs)}: ${batchGrams} g, noSugarNeeded ${noSugarNeeded}`);
     }
     assert.deepEqual(wrong.slice(0, 10), []);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Added in T21: upper limits, so no figure can overflow.
+// ---------------------------------------------------------------------------
+
+/** The next number up from x (x more than 0): the smallest step over it. */
+function nextUp(x) {
+  const n = new Float64Array([x]);
+  new BigUint64Array(n.buffer)[0] += 1n;
+  return n[0];
+}
+
+function assertOverLimit(fn, field, message) {
+  assert.throws(fn, (err) => {
+    assert.ok(err instanceof PrimingInputError, `expected PrimingInputError, got ${err.name}`);
+    assert.equal(err.field, field);
+    assert.equal(err.code, 'over-limit');
+    assert.equal(err.message, message);
+    return true;
+  });
+}
+
+const OVER = {
+  litres: 'Beer volume must be 10,000 litres or less.',
+  bottleMl: 'Bottle size must be 20,000 ml or less.',
+  targetVols: 'Target CO2 must be 10 volumes or less.',
+  bottleLitres: 'Bottle size must be 20 litres or less.',
+  batchGrams: 'Batch sugar must be 400,000 g or less.',
+};
+
+describe('upper limits (T21)', () => {
+  test('the limits are 10,000 litres, a 20,000 ml bottle, 10 volumes and 400,000 g of batch sugar', () => {
+    assert.equal(MAX_LITRES, 10000);
+    assert.equal(MAX_BOTTLE_ML, 20000);
+    assert.equal(MAX_TARGET_VOLS, 10);
+    // 4.0 g (dextrose, the bigger factor) × 10 volumes × 10,000 litres
+    assert.equal(MAX_BATCH_GRAMS, 400000);
+    assert.ok(ERROR_CODES.includes('over-limit'));
+  });
+
+  test('every listed bottle and every style range sit inside the limits', () => {
+    assert.ok(Math.max(...BOTTLE_SIZES_ML) <= MAX_BOTTLE_ML);
+    assert.ok(STYLE_PRESETS.every((p) => p.max === null || p.max <= MAX_TARGET_VOLS));
+  });
+
+  test('beer volume: 10,000 litres is allowed and gives the formula figures', () => {
+    const result = calc({ litres: 10000 });
+    // (2.4 − 0.8614872) × 10,000 × 4.0 = 61,540.512 g; × 0.33 ÷ 10,000 = 2.0308369 g
+    assertNear(result.batchGrams, 61540.512, 1e-6);
+    assertNear(result.perBottleGrams, 2.03083690, 1e-6);
+    assert.deepEqual(calc({ litres: '10000' }), result);
+    assert.deepEqual(calc({ litres: '1e4' }), result);
+  });
+
+  test('beer volume: just over 10,000 litres gives the limit message', () => {
+    for (const litres of [10000.01, nextUp(10000), '10000.001', '1.00001e4', 1e6, 1e308]) {
+      assertOverLimit(() => calc({ litres }), 'litres', OVER.litres);
+    }
+  });
+
+  test('bottle size: 20,000 ml is allowed and gets its share of the batch', () => {
+    const result = calc({ litres: 100, bottleMl: 20000 });
+    assertNear(result.perBottleGrams, (result.batchGrams * 20) / 100, 1e-9);
+    assert.deepEqual(calc({ litres: 100, bottleMl: '2e4' }), result);
+  });
+
+  test('bottle size: just over 20,000 ml gives the limit message', () => {
+    for (const bottleMl of [20000.01, nextUp(20000), '20000.001', 1e162, 1e308]) {
+      assertOverLimit(() => calc({ litres: 100, bottleMl }), 'bottleMl', OVER.bottleMl);
+    }
+  });
+
+  test('bottle size: over the limit and bigger than the batch gives the limit message first', () => {
+    assertOverLimit(() => calc({ litres: 20, bottleMl: 25000 }), 'bottleMl', OVER.bottleMl);
+  });
+
+  test('target CO2: 10 volumes is allowed, gives the formula figures and flags high pressure', () => {
+    const result = calc({ targetVols: 10 });
+    // (10 − 0.8614872) × 20 × 4.0 = 731.081024 g
+    assertNear(result.batchGrams, 731.081024, 1e-6);
+    assert.equal(result.highPressure, true);
+    assert.deepEqual(calc({ targetVols: '10' }), result);
+  });
+
+  test('target CO2: just over 10 volumes gives the limit message', () => {
+    for (const targetVols of [10.01, nextUp(10), '10.001', 1e307]) {
+      assertOverLimit(() => calc({ targetVols }), 'targetVols', OVER.targetVols);
+    }
+  });
+
+  test('batchSugarGrams on its own takes the same volume and target limits', () => {
+    // (10 − 0.8614872) × 10,000 × 4.0 = 365,540.512 g
+    assertNear(batchSugarGrams({ litres: 10000, tempC: 20, targetVols: 10 }), 365540.512, 1e-6);
+    assertOverLimit(() => batchSugarGrams({ litres: nextUp(10000), tempC: 20, targetVols: 2.4 }), 'litres', OVER.litres);
+    assertOverLimit(() => batchSugarGrams({ litres: 20, tempC: 20, targetVols: nextUp(10) }), 'targetVols', OVER.targetVols);
+  });
+
+  test('gramsPerBottle on its own: 400,000 g, a 20 litre bottle and a 10,000 litre batch are allowed', () => {
+    assert.equal(gramsPerBottle(400000, 20, 10000), 800);
+    assert.equal(gramsPerBottle(400000, 20, 20), 400000);
+  });
+
+  test('gramsPerBottle on its own: just over each limit gives that limit message', () => {
+    assertOverLimit(() => gramsPerBottle(nextUp(400000), 0.33, 20), 'batchGrams', OVER.batchGrams);
+    assertOverLimit(() => gramsPerBottle(100, nextUp(20), 10000), 'bottleLitres', OVER.bottleLitres);
+    assertOverLimit(() => gramsPerBottle(100, 0.33, nextUp(10000)), 'batchLitres', OVER.litres);
+  });
+
+  test('gramsPerBottle: the batch sugar that used to overflow to Infinity (1e308 g) gives the limit message', () => {
+    assertOverLimit(() => gramsPerBottle(1e308, 20, 20), 'batchGrams', OVER.batchGrams);
+  });
+
+  test('the cases from the T21 ticket give a field message instead of Infinity or an error about batchGrams', () => {
+    assertOverLimit(() => calc({ litres: 1e308 }), 'litres', OVER.litres);
+    assertOverLimit(() => calc({ targetVols: 1e307 }), 'targetVols', OVER.targetVols);
+    assertOverLimit(() => calc({ litres: 1e160, bottleMl: 1e162 }), 'litres', OVER.litres);
+    assertOverLimit(() => calc({ litres: 100, bottleMl: 1e162 }), 'bottleMl', OVER.bottleMl);
+  });
+
+  test('at every limit at once, every 0.1 °C and both sugars, the figures are finite, under MAX_BATCH_GRAMS and in plain digits', () => {
+    const wrong = [];
+    for (let tenthsC = 0; tenthsC <= 400; tenthsC += 1) {
+      for (const sugar of ['dextrose', 'table']) {
+        const inputs = { litres: MAX_LITRES, tempC: tenthsC / 10, targetVols: MAX_TARGET_VOLS, bottleMl: MAX_BOTTLE_ML, sugar };
+        const { batchGrams, perBottleGrams } = calculatePriming(inputs);
+        const ok = [batchGrams, perBottleGrams].every((g) => Number.isFinite(g) && g > 0 && g <= MAX_BATCH_GRAMS && !/e/i.test(g.toFixed(2)));
+        if (!ok) wrong.push(`${JSON.stringify(inputs)}: ${batchGrams} g, ${perBottleGrams} g`);
+      }
+    }
+    assert.deepEqual(wrong, []);
+  });
+
+  test('the limits leave the reference cases exactly as they were', () => {
+    // Worked by hand from the PROJECT.md formulas (dextrose, 330 ml):
+    // (2.4 − 0.8614872) × 20 × 4.0, (2.6 − 0.75747195) × 10 × 4.0, (3.5 − 0.6964758) × 23 × 4.0
+    const expected = [
+      { litres: 20, tempC: 20, targetVols: 2.4, batch: 123.081024 },
+      { litres: 10, tempC: 25, targetVols: 2.6, batch: 73.701122 },
+      { litres: 23, tempC: 30, targetVols: 3.5, batch: 257.9242264 },
+    ];
+    for (const c of expected) {
+      const result = calc(c);
+      assertNear(result.batchGrams, c.batch, 1e-9);
+      assertNear(result.perBottleGrams, (c.batch * 0.33) / c.litres, 1e-9);
+    }
   });
 });
 

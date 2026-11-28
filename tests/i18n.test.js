@@ -56,6 +56,17 @@ const BAD_INPUT = [
   { bottleSize: 'custom', customBottleMl: '0' },
   { bottleSize: 'custom', customBottleMl: '30000' },
   { sugar: 'honey' },
+  // Upper limits (T21)
+  { litres: '10000.01' },
+  { targetVols: '10.01' },
+  { litres: '100', bottleSize: 'custom', customBottleMl: '20000.01' },
+];
+
+// Input just over each upper limit (T21), and the field it marks.
+const OVER_LIMIT = [
+  { input: { litres: '10000.01' }, field: 'litres', figure: '10,000' },
+  { input: { litres: '100', bottleSize: 'custom', customBottleMl: '20000.01' }, field: 'customBottleMl', figure: '20,000' },
+  { input: { targetVols: '10.01' }, field: 'targetVols', figure: '10' },
 ];
 const GOOD = { litres: '20', tempC: '20', targetVols: '2.4' };
 
@@ -199,6 +210,39 @@ describe('every input error has its own Thai message (T15)', () => {
       assert.ok(fields.has(field), key);
       assert.ok(ERROR_CODES.includes(code), key);
     }
+  });
+
+  for (const { input, field, figure } of OVER_LIMIT) {
+    test(`over the limit (${field}): the Thai message gives the same limit, ${figure}, as the English one (T21)`, () => {
+      const en = computeView({ ...GOOD, ...input }).errors[field];
+      const th = computeView({ ...GOOD, ...input }, { lang: 'th' }).errors[field];
+      assert.ok(en.includes(` ${figure} `), en);
+      assert.ok(th.includes(` ${figure} `), th);
+      assert.deepEqual(th.match(/[\d,.]+\d/g), en.match(/[\d,.]+\d/g), 'same figures');
+    });
+  }
+
+  test('the Thai over-limit messages come from i18n.js with {max} filled in (T21)', () => {
+    const cases = [
+      ['litres', 'ปริมาณเบียร์ต้องไม่เกิน 10,000 ลิตร'],
+      ['bottleMl', 'ขนาดขวดต้องไม่เกิน 20,000 มล.'],
+      ['targetVols', 'CO2 เป้าหมายต้องไม่เกิน 10 วอลุ่ม'],
+    ];
+    for (const [field, message] of cases) {
+      assert.match(TEXT.th.errors[`${field}.over-limit`], /\{max\}/, field);
+      assert.equal(errorMessage(new PrimingInputError('', field, 'over-limit'), 'th'), message);
+    }
+  });
+
+  test('the Thai temperature message still gets 0 and 40 °C (T21 changed how {min} and {max} are filled)', () => {
+    const err = new PrimingInputError('', 'tempC', 'out-of-range');
+    assert.equal(errorMessage(err, 'th'), 'อุณหภูมิต้องอยู่ระหว่าง 0 ถึง 40 °C');
+  });
+
+  test('the "check the numbers" prompt is Thai on the Thai page (T21)', () => {
+    const v = computeView({ ...GOOD, bottleSize: 'custom', customBottleMl: '1e-322' }, { lang: 'th' });
+    assert.equal(v.prompt, TEXT.th.promptCheck);
+    assert.match(v.prompt, THAI);
   });
 
   test('an error with no Thai message gets the Thai catch-all, and English keeps the module message', () => {

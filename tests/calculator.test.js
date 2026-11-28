@@ -69,8 +69,13 @@ const MSG = {
   bottlePositive: 'Bottle size must be more than 0 ml.',
   bottleTooBig: "Bottle size can't be bigger than the whole batch.",
   sugar: 'Sugar type must be dextrose or table sugar.',
+  // Upper limits (T21)
+  litresMax: 'Beer volume must be 10,000 litres or less.',
+  bottleMax: 'Bottle size must be 20,000 ml or less.',
+  targetMax: 'Target CO2 must be 10 volumes or less.',
 };
 const PROMPT_FIX = 'Fix the marked fields to see the result.';
+const PROMPT_CHECK = "The calculator can't work with these numbers. Check each field.";
 
 // ==========================================================================
 // Helpers
@@ -558,10 +563,12 @@ describe('edge cases in typed text', () => {
     });
   }
 
-  test('a very large batch (1,000,000 litres) gives the calculatePriming figures', () => {
-    const v = view({ litres: '1000000' });
-    assertShowsModule(v, moduleResult({ ...BASE, litres: 1e6 }));
-    assert.equal(v.batchText, '6154051.2');
+  // Was 1,000,000 litres until T21 set the largest batch at 10,000 litres.
+  test('the largest batch (10,000 litres) gives the calculatePriming figures', () => {
+    const v = view({ litres: '10000' });
+    assertShowsModule(v, moduleResult({ ...BASE, litres: 1e4 }));
+    // (2.4 − 0.8614872) × 10,000 × 4.0 = 61,540.512 g
+    assert.equal(v.batchText, '61540.5');
   });
 
   test('0 °C is accepted and gives the calculatePriming figures', () => {
@@ -1237,18 +1244,26 @@ describe('figures never show a minus sign (T6 final run)', () => {
 });
 
 describe('numbers too big to work out (T6 final run)', () => {
-  test('a batch sugar too big to work out (1e308 litres, or a 1e307 vols target) gives a field message and no figures instead of throwing', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, () => {
-    for (const overrides of [{ litres: '1e308' }, { targetVols: '1e307' }]) {
+  // Parked as todos until T21 added the upper limits. Each now expects the
+  // field's limit message.
+  test('a batch sugar too big to work out (1e308 litres, or a 1e307 vols target) gives a field message and no figures instead of throwing', () => {
+    const cases = [
+      { overrides: { litres: '1e308' }, errors: { litres: MSG.litresMax } },
+      { overrides: { targetVols: '1e307' }, errors: { targetVols: MSG.targetMax } },
+    ];
+    for (const { overrides, errors } of cases) {
       let v;
       assert.doesNotThrow(() => { v = view(overrides); }, `computeView threw for ${JSON.stringify(overrides)}`);
       assertNoResult(v);
-      assert.ok(Object.keys(v.errors).length > 0, `${JSON.stringify(overrides)}: no field message`);
+      assert.deepEqual(v.errors, errors, `${JSON.stringify(overrides)}: field message`);
     }
   });
 
-  test('a per-bottle figure too big to work out (1e160 litres, 1e162 ml custom bottle) is never shown as "Infinity"', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, () => {
+  test('a per-bottle figure too big to work out (1e160 litres, 1e162 ml custom bottle) is never shown as "Infinity"', () => {
     const v = view({ litres: '1e160', bottleSize: CUSTOM_BOTTLE, customBottleMl: '1e162' });
     assert.ok(!/Infinity/.test(v.perBottleText) && !/Infinity/.test(v.batchText), `shows ${v.batchText} g and ${v.perBottleText} g`);
+    assert.deepEqual(v.errors, { litres: MSG.litresMax, customBottleMl: MSG.bottleMax });
+    assertNoResult(v);
   });
 });
 
@@ -1297,19 +1312,307 @@ describe('page wiring: target at the residual, Thai page and big numbers (stand-
     }
   });
 
-  test('typing a batch too big to work out (1e30 then 1e308 litres) does not leave the old figures on screen', { todo: 'T21: numbers too big to work out; Toon accepted T6 on Sat 28 Nov and the fix is its own ticket' }, async () => {
-    const page = await openWithCase({ ...REFERENCE_CASES[0], litres: '1e30' });
+  // Parked as a todo until T21. It started from 1e30 litres, which is now
+  // over the limit and shows no figures, so it starts from the largest batch
+  // the calculator takes (10,000 litres), which does.
+  test('typing a batch too big to work out (10,000 L, then 1e30 and 1e308 litres) does not leave the old figures on screen', async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], litres: '10000' });
+    assert.ok(page.shown('result-values'), 'figures shown for 10,000 litres');
     const before = page.text('batch-grams');
-    let thrown = null;
-    // A browser logs an error thrown in an input handler and carries on, so
-    // catch it here and look at what the page is left showing.
-    try { page.type('litres', '1e308'); } catch (err) { thrown = err; }
-    const stale = page.shown('result-values') && page.text('batch-grams') === before;
-    assert.equal(
-      stale,
-      false,
-      `the page still shows ${before} g (the 1e30 litres figure) while the field says 1e308` +
-        (thrown ? `; the input handler threw ${thrown.name}: ${thrown.message}` : ''),
-    );
+    for (const litres of ['1e30', '1e308']) {
+      let thrown = null;
+      // A browser logs an error thrown in an input handler and carries on, so
+      // catch it here and look at what the page is left showing.
+      try { page.type('litres', litres); } catch (err) { thrown = err; }
+      const stale = page.shown('result-values') && page.text('batch-grams') === before;
+      assert.equal(
+        stale,
+        false,
+        `the page still shows ${before} g (the 10,000 litres figure) while the field says ${litres}` +
+          (thrown ? `; the input handler threw ${thrown.name}: ${thrown.message}` : ''),
+      );
+      assert.equal(thrown, null, `the input handler threw for ${litres}`);
+      assert.ok(page.shown('litres-error'), `volume error shown for ${litres}`);
+      assert.equal(page.text('litres-error'), MSG.litresMax);
+    }
+  });
+});
+
+// ==========================================================================
+// Upper limits (T21): 10,000 litres, a 20,000 ml bottle, 10 volumes
+// ==========================================================================
+
+// The Thai limit messages, with the figures filled in.
+const TH_MAX = {
+  litres: 'ปริมาณเบียร์ต้องไม่เกิน 10,000 ลิตร',
+  bottle: 'ขนาดขวดต้องไม่เกิน 20,000 มล.',
+  target: 'CO2 เป้าหมายต้องไม่เกิน 10 วอลุ่ม',
+};
+const TH_PROMPT_FIX = 'แก้ช่องที่ทำเครื่องหมายไว้ เพื่อดูผลลัพธ์';
+
+/** Infinity, NaN or a number in exponent form ("1e+21", "6.15e30", "1e-7"). */
+const NOT_PLAIN = /Infinity|NaN|\d[eE][+-]?\d/;
+
+/** Element id on calculator.html for each text field. */
+const INPUT_IDS = { litres: 'litres', customBottleMl: 'custom-bottle-ml', targetVols: 'target-vols', tempC: 'temp-c' };
+
+// Each limit: the page field, the overrides at and just over the limit, and
+// the message in each language. The bottle checks use a 100 L batch, so a
+// 20 L keg is not also bigger than the batch.
+const LIMITS = [
+  {
+    name: 'beer volume',
+    field: 'litres',
+    at: { litres: '10000' },
+    over: [{ litres: '10000.01' }, { litres: '10000.000000001' }, { litres: '1.0000001e4' }],
+    en: MSG.litresMax,
+    th: TH_MAX.litres,
+  },
+  {
+    name: 'custom bottle size',
+    field: 'customBottleMl',
+    at: { litres: '100', bottleSize: CUSTOM_BOTTLE, customBottleMl: '20000' },
+    over: [
+      { litres: '100', bottleSize: CUSTOM_BOTTLE, customBottleMl: '20000.01' },
+      { litres: '100', bottleSize: CUSTOM_BOTTLE, customBottleMl: '20000.000000001' },
+      { litres: '100', bottleSize: CUSTOM_BOTTLE, customBottleMl: '2.0000001e4' },
+    ],
+    en: MSG.bottleMax,
+    th: TH_MAX.bottle,
+  },
+  {
+    name: 'target CO2',
+    field: 'targetVols',
+    at: { targetVols: '10' },
+    over: [{ targetVols: '10.01' }, { targetVols: '10.000000001' }, { targetVols: '1.0000001e1' }],
+    en: MSG.targetMax,
+    th: TH_MAX.target,
+  },
+];
+
+describe('upper limits on the page (T21)', () => {
+  for (const limit of LIMITS) {
+    test(`${limit.name}: just at the limit gives the calculatePriming figures, in plain digits`, () => {
+      const v = view(limit.at);
+      const raw = { ...BASE, ...limit.at };
+      const bottleMl = raw.bottleSize === CUSTOM_BOTTLE ? raw.customBottleMl : raw.bottleSize;
+      assertShowsModule(v, moduleResult({ ...raw, bottleMl }));
+      for (const text of [v.batchText, v.perBottleText, v.residualText, v.perBottleLabel]) {
+        assert.doesNotMatch(text, NOT_PLAIN);
+      }
+    });
+
+    test(`${limit.name}: just at the limit gives the same figures in Thai`, () => {
+      const en = view(limit.at);
+      const th = view(limit.at, { lang: 'th' });
+      assert.deepEqual(th.errors, {});
+      assert.equal(th.batchText, en.batchText);
+      assert.equal(th.perBottleText, en.perBottleText);
+    });
+
+    test(`${limit.name}: just over the limit gives "${limit.en}" on the field and no figures`, () => {
+      for (const overrides of limit.over) {
+        assertFieldError(view(overrides), limit.field, limit.en);
+      }
+    });
+
+    test(`${limit.name}: just over the limit gives the Thai limit message on the field and no figures`, () => {
+      for (const overrides of limit.over) {
+        const v = view(overrides, { lang: 'th' });
+        assert.deepEqual(v.errors, { [limit.field]: limit.th }, JSON.stringify(overrides));
+        assertNoResult(v);
+        assert.equal(v.prompt, TH_PROMPT_FIX);
+      }
+    });
+
+    test(`${limit.name}: an over-limit value is marked even before the field is touched`, () => {
+      const v = view(limit.over[0], { touched: new Set() });
+      assert.deepEqual(v.errors, { [limit.field]: limit.en });
+    });
+  }
+
+  test('a 10 volumes target shows the high-pressure note with its figures', () => {
+    const v = view({ targetVols: '10' });
+    assert.deepEqual(v.notes, [HIGH_PRESSURE_TEXT]);
+    assert.equal(v.hasResult, true);
+  });
+
+  test('a 20,000 ml bottle for a 20 litre batch is allowed and gets all the sugar', () => {
+    const v = view({ litres: '20', bottleSize: CUSTOM_BOTTLE, customBottleMl: '20000' });
+    assert.deepEqual(v.errors, {});
+    assert.equal(v.perBottleText, v.result.batchGrams.toFixed(2));
+    assert.equal(v.perBottleLabel, 'Dextrose per 20000 ml bottle');
+  });
+
+  test('a bottle over the limit and bigger than the batch gets the limit message', () => {
+    assertFieldError(view({ litres: '20', bottleSize: CUSTOM_BOTTLE, customBottleMl: '25000' }), 'customBottleMl', MSG.bottleMax);
+  });
+
+  test('all three over the limit at once: each field gets its own message, in English and Thai', () => {
+    const overrides = { litres: '20000', bottleSize: CUSTOM_BOTTLE, customBottleMl: '30000', targetVols: '12' };
+    const en = view(overrides);
+    assert.deepEqual(en.errors, { litres: MSG.litresMax, customBottleMl: MSG.bottleMax, targetVols: MSG.targetMax });
+    assertNoResult(en);
+    const th = view(overrides, { lang: 'th' });
+    assert.deepEqual(th.errors, { litres: TH_MAX.litres, customBottleMl: TH_MAX.bottle, targetVols: TH_MAX.target });
+    assertNoResult(th);
+  });
+
+  test('an over-limit volume next to a bad temperature: both get their own message', () => {
+    const v = view({ litres: '1e6', tempC: '45' });
+    assert.deepEqual(v.errors, { litres: MSG.litresMax, tempC: MSG.tempRange });
+  });
+
+  test('the largest figures the limits allow are plain digits (10,000 L, 10 vols, 20,000 ml, every °C, both sugars)', () => {
+    const wrong = [];
+    for (let tempC = 0; tempC <= 40; tempC += 1) {
+      for (const sugar of ['dextrose', 'table']) {
+        const raw = { litres: '10000', targetVols: '10', tempC: String(tempC), sugar, bottleSize: CUSTOM_BOTTLE, customBottleMl: '20000' };
+        const v = view(raw);
+        if (!v.hasResult || [v.batchText, v.perBottleText, v.residualText].some((s) => NOT_PLAIN.test(s))) {
+          wrong.push(`${tempC} °C, ${sugar}: ${v.batchText} / ${v.perBottleText} ${JSON.stringify(v.errors)}`);
+        }
+      }
+    }
+    assert.deepEqual(wrong, []);
+  });
+});
+
+describe('no figure is ever Infinity, NaN or in exponent form (T21)', () => {
+  const VALUES = {
+    litres: ['1e-300', '0.000001', '0.33', '20', '9999.999', '10000', '10000.000001', '1e21', '1e160', '1e300', '1.7976931348623157e308'],
+    customBottleMl: ['1e-322', '1e-300', '0.0000001', '0.5', '330', '19999.99', '20000', '20000.01', '1e21', '1e162', '1e308'],
+    targetVols: ['1e-300', '0.5', '2.4', '9.99', '10', '10.01', '1e21', '1e307'],
+    tempC: ['0', '20', '34.6', '40'],
+  };
+
+  for (const lang of ['en', 'th']) {
+    test(`${lang === 'en' ? 'English' : 'Thai'} view: huge, tiny and edge values in every field never throw or show Infinity, NaN or an exponent`, () => {
+      const wrong = [];
+      for (const litres of VALUES.litres) {
+        for (const customBottleMl of VALUES.customBottleMl) {
+          for (const targetVols of VALUES.targetVols) {
+            for (const tempC of VALUES.tempC) {
+              const raw = { litres, bottleSize: CUSTOM_BOTTLE, customBottleMl, targetVols, tempC };
+              let v;
+              try {
+                v = view(raw, { lang });
+              } catch (err) {
+                wrong.push(`${JSON.stringify(raw)}: threw ${err.name}: ${err.message}`);
+                continue;
+              }
+              const shown = [v.batchText, v.perBottleText, v.residualText, v.perBottleLabel, v.prompt, ...Object.values(v.errors)];
+              if (shown.some((s) => NOT_PLAIN.test(s))) wrong.push(`${JSON.stringify(raw)}: ${JSON.stringify(shown)}`);
+              if (!v.hasResult && v.prompt === '') wrong.push(`${JSON.stringify(raw)}: no result and no prompt`);
+            }
+          }
+        }
+      }
+      assert.deepEqual(wrong.slice(0, 10), []);
+    });
+  }
+
+  test('a tiny custom bottle (0.0000001 ml, or typed as 1e-7) is named in plain digits in the per-bottle label', () => {
+    for (const customBottleMl of ['0.0000001', '1e-7']) {
+      const v = view({ bottleSize: CUSTOM_BOTTLE, customBottleMl });
+      assert.equal(v.perBottleLabel, 'Dextrose per 0.0000001 ml bottle', customBottleMl);
+      assert.equal(v.perBottleText, '0.00');
+    }
+    const th = view({ bottleSize: CUSTOM_BOTTLE, customBottleMl: '2.5e-10' }, { lang: 'th' });
+    assert.equal(th.perBottleLabel, 'เดกซ์โทรสต่อขวด 0.00000000025 มล.');
+  });
+
+  test('listed and ordinary custom bottle sizes keep their labels as before', () => {
+    for (const [overrides, label] of [
+      [{ bottleSize: '330' }, 'Dextrose per 330 ml bottle'],
+      [{ bottleSize: CUSTOM_BOTTLE, customBottleMl: '750' }, 'Dextrose per 750 ml bottle'],
+      [{ bottleSize: CUSTOM_BOTTLE, customBottleMl: '1e3' }, 'Dextrose per 1000 ml bottle'],
+      [{ bottleSize: CUSTOM_BOTTLE, customBottleMl: '.5' }, 'Dextrose per 0.5 ml bottle'],
+      [{ bottleSize: CUSTOM_BOTTLE, customBottleMl: '0.000001' }, 'Dextrose per 0.000001 ml bottle'],
+    ]) {
+      assert.equal(view(overrides).perBottleLabel, label, JSON.stringify(overrides));
+    }
+  });
+
+  // A bottle so small (1e-322 ml) that it is 0 once worked out in litres. The
+  // module then throws about bottleLitres, which is not a field on the page.
+  // Before T21 that error escaped computeView and crashed the input handler.
+  for (const lang of ['en', 'th']) {
+    test(`${lang === 'en' ? 'English' : 'Thai'} view: an error about a value that is not a page field (a 1e-322 ml bottle) gives no figures and the "check the numbers" prompt, without throwing`, () => {
+      let v;
+      assert.doesNotThrow(() => { v = view({ bottleSize: CUSTOM_BOTTLE, customBottleMl: '1e-322' }, { lang }); });
+      assertNoResult(v);
+      assert.deepEqual(v.errors, {});
+      assert.equal(v.prompt, lang === 'en' ? PROMPT_CHECK : TEXT.th.promptCheck);
+    });
+  }
+
+  test('an error that is not a page field next to a field error: the field gets its message, no figures', () => {
+    const v = view({ litres: '0', bottleSize: CUSTOM_BOTTLE, customBottleMl: '1e-322' });
+    assert.deepEqual(v.errors, { litres: MSG.litresPositive });
+    assertNoResult(v);
+    assert.equal(v.prompt, PROMPT_FIX);
+  });
+
+  test('the "check the numbers" prompt is in i18n.js in both languages', () => {
+    assert.equal(TEXT.en.promptCheck, PROMPT_CHECK);
+    assert.match(TEXT.th.promptCheck, /[฀-๿]/);
+  });
+});
+
+describe('page wiring: upper limits and errors that are not page fields (stand-in DOM, T21)', () => {
+  test('English page: typing each over-limit value hides the figures and shows the field\'s limit message', async () => {
+    for (const limit of LIMITS) {
+      const page = await openWithCase(REFERENCE_CASES[0]);
+      if (limit.at.bottleSize) page.pick('bottle-size', limit.at.bottleSize);
+      for (const [key, value] of Object.entries(limit.at)) {
+        if (INPUT_IDS[key]) page.type(INPUT_IDS[key], value);
+      }
+      assert.ok(page.shown('result-values'), `${limit.name}: figures shown at the limit`);
+      const id = INPUT_IDS[limit.field];
+      page.type(id, limit.over[0][limit.field]);
+      assert.ok(!page.shown('result-values'), `${limit.name}: figures hidden just over the limit`);
+      assert.ok(page.shown(`${id}-error`));
+      assert.equal(page.text(`${id}-error`), limit.en);
+      assert.equal(page.el(id).getAttribute('aria-invalid'), 'true');
+      assert.equal(page.text('result-prompt'), PROMPT_FIX);
+      assert.ok(!page.shown('note-high-pressure') && !page.shown('note-no-sugar'), `${limit.name}: no notes`);
+    }
+  });
+
+  test('Thai page: an over-limit volume shows the Thai limit message', async () => {
+    const page = await openPage(CALCULATOR_TH_HTML);
+    page.type('litres', '20');
+    page.type('temp-c', '20');
+    assert.ok(page.shown('result-values'));
+    page.type('litres', '10000.01');
+    assert.ok(!page.shown('result-values'));
+    assert.equal(page.text('litres-error'), TH_MAX.litres);
+  });
+
+  test('a 1e-322 ml custom bottle after a result hides the figures and shows the "check the numbers" prompt, without throwing', async () => {
+    const page = await openWithCase(REFERENCE_CASES[0]);
+    page.pick('bottle-size', 'custom');
+    page.type('custom-bottle-ml', '750');
+    assert.ok(page.shown('result-values'), 'figures shown for 750 ml');
+    assert.doesNotThrow(() => page.type('custom-bottle-ml', '1e-322'));
+    assert.ok(!page.shown('result-values'), 'figures hidden');
+    assert.ok(page.shown('result-prompt'));
+    assert.equal(page.text('result-prompt'), PROMPT_CHECK);
+    page.type('custom-bottle-ml', '750');
+    assert.ok(page.shown('result-values'), 'figures back for 750 ml');
+    assert.ok(!page.shown('result-prompt'));
+  });
+
+  test('if working out the view fails, the old figures and notes are hidden before the error goes on', async () => {
+    const page = await openWithCase({ ...REFERENCE_CASES[0], targetVols: '3.5' });
+    assert.ok(page.shown('result-values') && page.shown('note-high-pressure'), 'figures and note shown before');
+    // A field the page can't read stands in for a bug anywhere in the wiring.
+    Object.defineProperty(page.el('temp-c'), 'value', { get() { throw new Error('test: field unreadable'); }, configurable: true });
+    assert.throws(() => page.el('litres').fire('input'), /field unreadable/);
+    assert.ok(!page.shown('result-values'), 'figures hidden');
+    assert.ok(!page.shown('note-high-pressure'), 'high-pressure note hidden');
+    assert.ok(page.shown('result-prompt'));
+    assert.equal(page.text('result-prompt'), PROMPT_CHECK);
   });
 });
